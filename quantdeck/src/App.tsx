@@ -39,14 +39,14 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online])
 
-  // Periodic background sync every 5 minutes
+  // Real-time sync — poll every 5 s when KVDB is enabled
   useEffect(() => {
     if (!isKvdbEnabled) return
     const id = setInterval(() => {
-      pullAndMerge().then(({ solved, saved, notes }) => {
-        setSolved(solved); setSaved(saved); setNotes(notes)
+      pullAndMerge().then(({ solved, saved, notes, changed }) => {
+        if (changed) { setSolved(solved); setSaved(saved); setNotes(notes) }
       }).catch(() => {})
-    }, 5 * 60 * 1000)
+    }, 5_000)
     return () => clearInterval(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
