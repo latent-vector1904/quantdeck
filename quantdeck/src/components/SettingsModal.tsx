@@ -1,16 +1,17 @@
 import { useRef, useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { isKvdbEnabled } from '../lib/kvdb'
+import { isKvdbEnabled, getBucketId, setCustomBucketId } from '../lib/kvdb'
 import { saveOverride, clearOverride, getOverrideMeta, loadProblems } from '../lib/problems'
 import { pullAndMerge } from '../lib/sync'
 
 const BASE = import.meta.env.BASE_URL
 
 export default function SettingsModal() {
-  const { toggleSettings, setAllProblems, setSolved, setSaved, setNotes, setSyncStatus, syncStatus, solved, saved, notes } = useStore()
+  const { toggleSettings, setAllProblems, setSolved, setSaved, setNotes, setSyncStatus, syncStatus, syncError, solved, saved, notes } = useStore()
   const [dragOver, setDragOver] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'parsed' | 'error'>('idle')
   const [uploadPreview, setUploadPreview] = useState<{ count: number; name: string } | null>(null)
+  const [bucketInput, setBucketInput] = useState(getBucketId())
   const fileRef = useRef<HTMLInputElement>(null)
   const overrideMeta = getOverrideMeta()
 
@@ -54,10 +55,11 @@ export default function SettingsModal() {
       setSolved(result.solved)
       setSaved(result.saved)
       setNotes(result.notes)
-      setSyncStatus('synced')
+      setSyncStatus('synced', null)
       setTimeout(() => setSyncStatus('idle'), 2000)
-    } catch {
-      setSyncStatus('error')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Sync failed'
+      setSyncStatus('error', msg)
     }
   }
 
@@ -84,10 +86,37 @@ export default function SettingsModal() {
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-faint mb-3">Sync</h3>
             <div className="bg-bg-muted rounded-xl p-4 flex flex-col gap-2.5">
               <Row label="KVDB.io Sync" value={isKvdbEnabled ? <Badge green>Connected</Badge> : <Badge>Not configured</Badge>} />
+              <Row label="Bucket ID" value={<span className="font-mono text-xs text-accent-dim">{getBucketId()}</span>} />
               <Row label="Solved problems" value={<span className="text-accent-dim font-semibold">{solved.size}</span>} />
               <Row label="Saved problems"  value={<span className="text-amber font-semibold">{saved.size}</span>} />
               <Row label="Problems with notes" value={<span className="text-text-dim">{Object.keys(notes).length}</span>} />
             </div>
+
+            <div className="mt-3 flex flex-col gap-1.5">
+              <label className="text-[11px] text-text-faint font-medium uppercase tracking-wider">Bucket ID</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={bucketInput}
+                  onChange={e => setBucketInput(e.target.value)}
+                  placeholder="e.g. 6Vq1F1fn5QXKjGKf1k7ouj"
+                  className="flex-1 bg-bg-muted border border-border rounded-lg px-3 py-1.5 text-xs text-text focus:outline-none focus:border-accent font-mono"
+                />
+                <button
+                  onClick={() => { setCustomBucketId(bucketInput); handleManualSync() }}
+                  className="px-3 py-1.5 bg-accent text-[hsl(220,13%,8%)] font-bold text-xs rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Save & Sync
+                </button>
+              </div>
+            </div>
+
+            {syncStatus === 'error' && syncError && (
+              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400 leading-relaxed font-mono">
+                ⚠️ <strong>Sync Error:</strong> {syncError}
+              </div>
+            )}
+
             {isKvdbEnabled && (
               <button
                 onClick={handleManualSync}
@@ -96,11 +125,6 @@ export default function SettingsModal() {
               >
                 {syncStatus === 'syncing' ? 'Syncing…' : syncStatus === 'synced' ? '✓ Synced' : 'Sync now'}
               </button>
-            )}
-            {!isKvdbEnabled && (
-              <p className="mt-2.5 text-[12px] text-text-faint leading-relaxed">
-                Add <code className="bg-bg-muted px-1.5 py-0.5 rounded text-accent-dim">VITE_KVDB_BUCKET_ID</code> to your <code className="bg-bg-muted px-1.5 py-0.5 rounded text-text">.env</code> to enable cross-device sync.
-              </p>
             )}
           </section>
 

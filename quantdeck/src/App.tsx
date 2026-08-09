@@ -32,10 +32,10 @@ export default function App() {
         setSolved(solved)
         setSaved(saved)
         setNotes(notes)
-        setSyncStatus('synced')
+        setSyncStatus('synced', null)
         setTimeout(() => setSyncStatus('idle'), 2000)
       })
-      .catch(() => setSyncStatus('error'))
+      .catch((err: Error) => setSyncStatus('error', err?.message || 'Sync failed'))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online])
 
@@ -45,7 +45,9 @@ export default function App() {
     const id = setInterval(() => {
       pullAndMerge().then(({ solved, saved, notes, changed }) => {
         if (changed) { setSolved(solved); setSaved(saved); setNotes(notes) }
-      }).catch(() => {})
+      }).catch((err: Error) => {
+        setSyncStatus('error', err?.message || 'Sync failed')
+      })
     }, 5_000)
     return () => clearInterval(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps

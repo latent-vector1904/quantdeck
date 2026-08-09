@@ -47,7 +47,8 @@ interface Store {
 
   // ── Sync status ───────────────────────────────────────────
   syncStatus: SyncStatus
-  setSyncStatus: (s: SyncStatus) => void
+  syncError: string | null
+  setSyncStatus: (s: SyncStatus, err?: string | null) => void
 
   // ── Internal ──────────────────────────────────────────────
   _refilter: () => void
@@ -130,7 +131,8 @@ export const useStore = create<Store>((set, get) => ({
 
   // ── Sync status ───────────────────────────────────────────
   syncStatus: 'idle',
-  setSyncStatus: (s) => set({ syncStatus: s }),
+  syncError: null,
+  setSyncStatus: (s, err = null) => set({ syncStatus: s, syncError: err }),
 
   // ── Internal ──────────────────────────────────────────────
   _refilter: () => {
