@@ -15,7 +15,22 @@ function slim(p: Problem): Problem {
 }
 
 export async function loadProblems(base: string): Promise<Problem[]> {
-  // Check for locally-overridden problems (uploaded via settings)
+  // Prefer fresh bundled problems when online (avoids stale CDN / upload override).
+  try {
+    const r = await fetch(`${base}problems.json`, { cache: 'no-store' })
+    if (r.ok) {
+      const json = await r.json() as { problems?: Problem[] } | Problem[]
+      const arr = Array.isArray(json) ? json : json.problems ?? []
+      const questions = sortProblems(arr.filter(p => !p.type || p.type === 'question'))
+      if (questions.length > 0) {
+        // Drop stale Settings upload so deploy updates win
+        if (localStorage.getItem(OVERRIDE_KEY)) clearOverride()
+        return questions
+      }
+    }
+  } catch { /* fall through to override / empty */ }
+
+  // Offline / fetch failed — use Settings upload if present
   try {
     const raw = localStorage.getItem(OVERRIDE_KEY)
     if (raw) {
@@ -26,11 +41,7 @@ export async function loadProblems(base: string): Promise<Problem[]> {
     }
   } catch { /* ignore */ }
 
-  // Fetch bundled problems.json
-  const r = await fetch(`${base}problems.json`)
-  const json = await r.json() as { problems?: Problem[] } | Problem[]
-  const arr = Array.isArray(json) ? json : json.problems ?? []
-  return sortProblems(arr.filter(p => p.type === 'question'))
+  return []
 }
 
 export function saveOverride(raw: unknown) {
