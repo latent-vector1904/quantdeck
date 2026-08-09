@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>QuantDeck</title>
+  <script>
+    // SPA redirect trick for GitHub Pages
+    const s = window.location.pathname.replace('/quantdeck', '') || '/'
+    window.location.replace('/quantdeck/' + (s === '/' ? '' : '?p=' + encodeURIComponent(s)))
+  </script>
+</head>
+<body></body>
+</html>

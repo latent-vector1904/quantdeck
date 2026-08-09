@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+*.local
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.pdf
+.vscode/
+*.tex.bak
+qd_workbook.tex
+workbook_build/

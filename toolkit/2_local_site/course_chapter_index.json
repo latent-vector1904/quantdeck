@@ -1,0 +1,774 @@
+{
+  "courses": [
+    {
+      "_id": "CZyxnysxA9pYJ5V6cLkZ",
+      "totalChapters": 0,
+      "thumbnailURL": "",
+      "level": "Intermediate",
+      "isPublished": true,
+      "price": {
+        "lifetime": 0,
+        "yearly": 0
+      },
+      "slug": "machine-learning-for-finance",
+      "title": "Machine Learning for Finance",
+      "description": "Machine learning concepts covered in depth along with real-world applications in quant finance, including a full industry-level project. Also includes structured guidance on how to improve on Kaggle and excel in ML-based quant competitions.",
+      "author": "M L",
+      "courseDuration": "30",
+      "currencySymbol": "$",
+      "id": "CZyxnysxA9pYJ5V6cLkZ",
+      "tags": [],
+      "category": "",
+      "order": "02",
+      "currency": "USD",
+      "createdAt": "2025-12-18T10:03:12.226Z",
+      "isProblemType": false,
+      "updatedAt": "2025-12-21T14:30:11.063Z",
+      "isComingSoon": true,
+      "noOfRatings": "0 ratings",
+      "rating": "",
+      "gradient": "from-blue-500 to-purple-500",
+      "noOfStudentsEnrolled": 0
+    },
+    {
+      "_id": "hcxGVp7hsshTfZBSUa9q",
+      "isComingSoon": true,
+      "description": "Deep learning concepts covered in depth along with real-world applications in quant finance, including a full industry-level project.",
+      "title": "Deep Learning for Finance",
+      "gradient": "from-blue-500 to-purple-500",
+      "id": "hcxGVp7hsshTfZBSUa9q",
+      "category": "",
+      "level": "Intermediate",
+      "tags": [],
+      "createdAt": "2025-12-18T10:05:53.411Z",
+      "order": "03",
+      "author": "D L",
+      "currencySymbol": "$",
+      "currency": "USD",
+      "slug": "deep-learning-for-finance",
+      "price": {
+        "yearly": 0,
+        "lifetime": 0
+      },
+      "courseDuration": "",
+      "updatedAt": "2025-12-21T14:30:32.787Z",
+      "rating": "4.7",
+      "noOfRatings": "0 ratings",
+      "totalChapters": 0,
+      "isPublished": true,
+      "isProblemType": false,
+      "thumbnailURL": "",
+      "noOfStudentsEnrolled": 0
+    },
+    {
+      "_id": "pxeKbx6V6C2IeBy1UnWm",
+      "rating": "4.9",
+      "gradient": "from-orange-400 to-yellow-500",
+      "slug": "quant-interview-masterclass",
+      "order": "01",
+      "currencySymbol": "$",
+      "currency": "USD",
+      "courseDuration": "47.1 total hours",
+      "price": {
+        "lifetime": 49.45,
+        "yearly": 24.45
+      },
+      "noOfStudentsEnrolled": 569,
+      "author": "Aviral Arpan",
+      "tags": [
+        "Quant",
+        "Interview",
+        "R programming"
+      ],
+      "description": "Everything you need to ace quant interviews. In-depth theory covering brainteasers, combinatorics, probability, statistics, market making, martingales, and more, with a strong emphasis on learning how to think and identify correct approaches on your own.",
+      "isProblemType": false,
+      "title": "Quant Interview Masterclass",
+      "id": "pxeKbx6V6C2IeBy1UnWm",
+      "totalChapters": 120,
+      "isPublished": true,
+      "createdAt": "2025-11-08T14:09:53.916Z",
+      "thumbnailURL": "https://firebasestorage.googleapis.com/v0/b/quantprof-backend-9cb17.firebasestorage.app/o/course-thumbnails%2Fquant-interview-masterclass_1762710248020?alt=media&token=f1f80411-327e-4197-ac69-a1b6aba2ef67",
+      "level": "Intermediate",
+      "noOfRatings": "500+ ratings",
+      "updatedAt": "2025-12-21T14:29:33.419Z",
+      "category": "Quant Finance"
+    }
+  ],
+  "chapters": [
+    {
+      "_id": "2KNQ2oCpH5sJn4oY2yUR",
+      "isPublished": true,
+      "order": 4,
+      "title": "Playlists",
+      "topicMeta": [
+        {
+          "title": "Company Specific Playlists",
+          "type": "playlist",
+          "topicId": "b1SFbUlKvLVMPdkiS5ej",
+          "order": 1
+        }
+      ],
+      "createdAt": "2025-11-17T18:30:00.385Z",
+      "totalTopics": 1,
+      "courseId": "pxeKbx6V6C2IeBy1UnWm"
+    },
+    {
+      "_id": "49nnruGOC0Vc8w3oLcER",
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "createdAt": "2025-11-24T16:02:38.791Z",
+      "totalTopics": 9,
+      "title": "Markov Chains",
+      "topicMeta": [
+        {
+          "type": "layout",
+          "title": "introduction to markov chains",
+          "order": 1,
+          "topicId": "cHnHakdnhIvgl3HZWi9j"
+        },
+        {
+          "topicId": "Cq3CEWGHWc6hjWQBF19H",
+          "order": 2,
+          "title": "probability of a path",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "chapman-kolmogorov equation for n-step transitions",
+          "order": 3,
+          "topicId": "l0qRSK1VAxAUk1tz5tvW"
+        },
+        {
+          "topicId": "sKUnblbjCKZpmREzKpdU",
+          "order": 4,
+          "title": "classification of states",
+          "type": "layout"
+        },
+        {
+          "title": "markov chain decomposition",
+          "type": "layout",
+          "topicId": "kan7U1H0nrjnndEuBGVZ",
+          "order": 5
+        },
+        {
+          "type": "layout",
+          "title": "steady-state behavior of markov chains",
+          "order": 6,
+          "topicId": "xZabF9M66phTmwSHqYuG"
+        },
+        {
+          "title": "expected time to absorption",
+          "type": "layout",
+          "topicId": "xQpoelKhYJXdIscL4fpv",
+          "order": 8
+        },
+        {
+          "topicId": "tzLykI6WpLuJUKatGtpO",
+          "order": 9,
+          "title": "expected first passage and return times",
+          "type": "layout"
+        },
+        {
+          "topicId": "9wvMRDK15TxYmIAQggFI",
+          "order": 7,
+          "title": "probability of absorption",
+          "type": "layout"
+        }
+      ],
+      "isPublished": true,
+      "order": 11
+    },
+    {
+      "_id": "58PcX8BoJ4wLKR1VPG94",
+      "totalTopics": 44,
+      "createdAt": "2025-11-24T16:01:16.652Z",
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "order": 8,
+      "isPublished": true,
+      "topicMeta": [
+        {
+          "topicId": "tlKOQqjHZ9CEpIKSpz66",
+          "order": 1,
+          "title": "basic terms and concepts",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "probability of an event",
+          "order": 2,
+          "topicId": "bFs9XVVhthWrpZkOpSDU"
+        },
+        {
+          "order": 3,
+          "topicId": "5S6MjoI8q8glU2fbKtfq",
+          "type": "layout",
+          "title": "principle of inclusion and exclusion (probability)"
+        },
+        {
+          "order": 4,
+          "topicId": "DETsn92a31TMSLHHipNb",
+          "type": "layout",
+          "title": "combinatorics in probability"
+        },
+        {
+          "order": 5,
+          "topicId": "xY7zmYToEnSM3WlEJ4xO",
+          "type": "layout",
+          "title": "conditional probability"
+        },
+        {
+          "order": 7,
+          "topicId": "0UV4RGhPrGq3TOXxttMq",
+          "type": "layout",
+          "title": "law of total probability"
+        },
+        {
+          "type": "layout",
+          "title": "bayes' formula",
+          "order": 8,
+          "topicId": "BP48ApnZyrtToJEoWSUZ"
+        },
+        {
+          "type": "layout",
+          "title": "conditional probability paradoxes",
+          "order": 9,
+          "topicId": "Xve7Y8bbHHYabQ14eAEh"
+        },
+        {
+          "order": 11,
+          "topicId": "NR3J9ke9jgfNNSMQASm0",
+          "type": "layout",
+          "title": "method of reduced sample space"
+        },
+        {
+          "order": 14,
+          "topicId": "HL5rysjJI07v0VQcnyS6",
+          "type": "layout",
+          "title": "symmetry in probability I - ad hoc"
+        },
+        {
+          "topicId": "FyakYBpTUNaUXDZ8O5GD",
+          "order": 16,
+          "title": "yet another symmetry chapter?",
+          "type": "layout"
+        },
+        {
+          "title": "introduction to random variables",
+          "type": "layout",
+          "topicId": "h4UZk3Z5S5tML3MBAU7q",
+          "order": 17
+        },
+        {
+          "title": "law of total variance",
+          "type": "layout",
+          "topicId": "4HGu6XhegRewDTSB9dPL",
+          "order": 44
+        },
+        {
+          "type": "layout",
+          "title": "random points on a segment",
+          "order": 37,
+          "topicId": "MlNZBd4nNNPl40vxeN6v"
+        },
+        {
+          "order": 21,
+          "topicId": "4g97j0dUH9Um350Gw2yN",
+          "type": "layout",
+          "title": "finding the probability density function"
+        },
+        {
+          "order": 23,
+          "topicId": "QeTxj9TL2I6MlKkNirhW",
+          "type": "layout",
+          "title": "the normal distribution"
+        },
+        {
+          "title": "conditional expectation",
+          "type": "layout",
+          "topicId": "PA5leMdtBMfQRtQaLZEB",
+          "order": 38
+        },
+        {
+          "order": 15,
+          "topicId": "aHo47DQB5RbJYvfHySAg",
+          "type": "layout",
+          "title": "symmetry in probability II - reduction in states"
+        },
+        {
+          "topicId": "1ktW9VmsgbD8cz2jUTps",
+          "order": 18,
+          "title": "discrete distributions: PMF and CDF",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "common discrete distributions",
+          "order": 19,
+          "topicId": "K3N3jc9bgjEzrJhs325E"
+        },
+        {
+          "title": "continuous distributions: PDF and CDF",
+          "type": "layout",
+          "topicId": "uAWSOPrMjMXV4X2pddff",
+          "order": 20
+        },
+        {
+          "topicId": "4vmqDxYwchEd7PvowsAO",
+          "order": 22,
+          "title": "common continuous distributions",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "law of total probability (continuous case)",
+          "order": 24,
+          "topicId": "ZfCDn6E6saIM4yh8WaTZ"
+        },
+        {
+          "title": "introduction to expected values",
+          "type": "layout",
+          "topicId": "uP8FScMC4f3uwFgODtkd",
+          "order": 25
+        },
+        {
+          "order": 26,
+          "topicId": "qS20vVKhz6lOcMrmwkB6",
+          "type": "layout",
+          "title": "law of total expectation"
+        },
+        {
+          "title": "law of the unconscious statistician (LOTUS)",
+          "type": "layout",
+          "topicId": "iFGRmBFnZN1qHFk4EPKe",
+          "order": 27
+        },
+        {
+          "order": 28,
+          "topicId": "KyJ8uKC97pgxstcVXDmY",
+          "type": "layout",
+          "title": "(discrete) tail sum formula"
+        },
+        {
+          "title": "tail integral formula",
+          "type": "layout",
+          "topicId": "YsOFxjOJwUmwTbEat9n1",
+          "order": 29
+        },
+        {
+          "type": "layout",
+          "title": "linearity of expectation",
+          "order": 30,
+          "topicId": "kZ64HSEfzo31X3ObSyNQ"
+        },
+        {
+          "title": "indicator variables",
+          "type": "layout",
+          "topicId": "Tb9TC2sJsUFbGlJ0Xl6l",
+          "order": 31
+        },
+        {
+          "type": "layout",
+          "title": "expectation of common distributions",
+          "order": 33,
+          "topicId": "nc3J2gI8VT3ZdTaK2ksn"
+        },
+        {
+          "order": 34,
+          "topicId": "dwZYQDzzfUUGEL3FL0Wp",
+          "type": "layout",
+          "title": "recursion in expectation"
+        },
+        {
+          "order": 35,
+          "topicId": "kZo1tyqvWL48ryRrtjLP",
+          "type": "layout",
+          "title": "symmetry in expectation I - ad hoc"
+        },
+        {
+          "title": "symmetry in expectation II - reduction in states",
+          "type": "layout",
+          "topicId": "75kSI7IJ1zNSOTmcQgWS",
+          "order": 36
+        },
+        {
+          "topicId": "qGBd6osy9VvdiVSV0gsv",
+          "order": 39,
+          "title": "principle of inclusion and exclusion for expected values",
+          "type": "layout"
+        },
+        {
+          "order": 40,
+          "topicId": "78tJfkqhXyxZ6NokzFNb",
+          "type": "layout",
+          "title": "summation using expectation"
+        },
+        {
+          "title": "variance ",
+          "type": "layout",
+          "topicId": "xi7ZVCIYWI82QiWkwrdo",
+          "order": 41
+        },
+        {
+          "type": "layout",
+          "title": "variance of common distributions",
+          "order": 42,
+          "topicId": "Oa0l9YLFVmAkjLgDwqSa"
+        },
+        {
+          "topicId": "YOUMSHc4wf8ufBAuF5lW",
+          "order": 6,
+          "title": "multiplication rule and independence",
+          "type": "layout"
+        },
+        {
+          "topicId": "keOoAqlCGOsyDKXLduls",
+          "order": 10,
+          "title": "some more paradoxes",
+          "type": "layout"
+        },
+        {
+          "order": 32,
+          "topicId": "2QLhKtZ0dEABRErTVkRu",
+          "type": "layout",
+          "title": "expectation of product of independent random variables"
+        },
+        {
+          "type": "layout",
+          "title": "geometric probability",
+          "order": 12,
+          "topicId": "mPJtHo4BKkZ9IBrNJyg1"
+        },
+        {
+          "topicId": "6Y6GFYTuONWCEbg5Sg2r",
+          "order": 13,
+          "title": "recursion in probability",
+          "type": "layout"
+        },
+        {
+          "order": 43,
+          "topicId": "1AgN0HIKdsrKCx9bRbSt",
+          "type": "layout",
+          "title": "linearity of variance?"
+        }
+      ],
+      "title": "Probability"
+    },
+    {
+      "_id": "7yI4fjav8Rgac0dFdZJ3",
+      "isPublished": true,
+      "order": 6,
+      "title": "Two Player Games",
+      "topicMeta": [
+        {
+          "title": "symmetry revisited",
+          "type": "layout",
+          "topicId": "tzu2n3HQODVlQYQscyp9",
+          "order": 1
+        },
+        {
+          "title": "stealing the strategy",
+          "type": "layout",
+          "topicId": "GqYwfst1xyzJfsr1YeYN",
+          "order": 2
+        },
+        {
+          "order": 3,
+          "topicId": "UgN9991LDKud99dOShu8",
+          "type": "layout",
+          "title": "identify winning/losing states"
+        },
+        {
+          "topicId": "jhIG4eXNSPF9C3IH8PeL",
+          "order": 4,
+          "title": "endgame analysis",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "ad-hoc",
+          "order": 5,
+          "topicId": "OSjC3pomCg0ROkSFB6ga"
+        }
+      ],
+      "createdAt": "2025-11-24T15:59:24.692Z",
+      "totalTopics": 5,
+      "courseId": "pxeKbx6V6C2IeBy1UnWm"
+    },
+    {
+      "_id": "FbghKIJAExfpo3pxr1ff",
+      "totalTopics": 5,
+      "createdAt": "2025-11-24T16:02:53.939Z",
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "order": 12,
+      "isPublished": true,
+      "topicMeta": [
+        {
+          "order": 1,
+          "topicId": "Gok8vhqhAyfTnY3eaW6M",
+          "type": "layout",
+          "title": "Introduction To Stochastic Processes"
+        },
+        {
+          "order": 2,
+          "topicId": "KA0COOZfYLxNTHFnXYJU",
+          "type": "layout",
+          "title": "Introduction To Martingales"
+        },
+        {
+          "order": 3,
+          "topicId": "Aie7vGUBhSD4MM4plo2m",
+          "type": "layout",
+          "title": "Martingale Stopping Theorem"
+        },
+        {
+          "order": 4,
+          "topicId": "kf0RCsIHjvdzEvVVasFc",
+          "type": "layout",
+          "title": "Wald's Equality"
+        },
+        {
+          "type": "layout",
+          "title": "Some Important Martingales",
+          "order": 5,
+          "topicId": "L9OjaVRV9mC1k2umHu9V"
+        }
+      ],
+      "title": "Martingales"
+    },
+    {
+      "_id": "JreV4hPvYIf8nGa0MzSf",
+      "topicMeta": [
+        {
+          "title": "curing the weak mind",
+          "type": "layout",
+          "topicId": "ecnGceYMlsfjlY6fWUBw",
+          "order": 1
+        },
+        {
+          "topicId": "NlW4P3vCfxr79aB3GZE2",
+          "order": 2,
+          "title": "curing the rigid mind",
+          "type": "layout"
+        },
+        {
+          "title": "where do solutions come from?",
+          "type": "layout",
+          "topicId": "VAAEiV7a7bvVSkQyyRFX",
+          "order": 3
+        },
+        {
+          "title": "the final step",
+          "type": "layout",
+          "topicId": "CBF2jys8yiNIa77eQbDw",
+          "order": 4
+        },
+        {
+          "topicId": "gd37DuyIm2GT4Zy0eBBZ",
+          "order": 5,
+          "title": "so, how to practice problem solving?",
+          "type": "layout"
+        }
+      ],
+      "title": "Getting Started",
+      "order": 3,
+      "isPublished": true,
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "totalTopics": 5,
+      "createdAt": "2025-11-24T15:58:01.395Z"
+    },
+    {
+      "_id": "KV8iY10vZHRLmiEy2QIk",
+      "order": 7,
+      "isPublished": true,
+      "topicMeta": [
+        {
+          "topicId": "Twub8UutvmLoFWBy08WS",
+          "order": 1,
+          "title": "introduction to combinatorics",
+          "type": "layout"
+        },
+        {
+          "order": 2,
+          "topicId": "ayTfE1Tjx8XnU303WAuL",
+          "type": "layout",
+          "title": "multiplication and addition rules"
+        },
+        {
+          "type": "layout",
+          "title": "linear permutations",
+          "order": 3,
+          "topicId": "2i2VDpwn0FzizYeRjW9U"
+        },
+        {
+          "topicId": "MfbYzIzUsK47SfV7l0fD",
+          "order": 4,
+          "title": "circular permutations",
+          "type": "layout"
+        },
+        {
+          "order": 5,
+          "topicId": "95jvDjN5L9A6RVSHPwXb",
+          "type": "layout",
+          "title": "combinations"
+        },
+        {
+          "topicId": "H7znkpgZvle8i3am1yqd",
+          "order": 6,
+          "title": "combinatorial identities",
+          "type": "layout"
+        },
+        {
+          "type": "layout",
+          "title": "binomial theorem",
+          "order": 7,
+          "topicId": "W9UzAXh8ByIAmdoRBfZB"
+        },
+        {
+          "type": "layout",
+          "title": "simple but useful techniques",
+          "order": 8,
+          "topicId": "SCAcaQHgWm7KBcnrIyV4"
+        },
+        {
+          "order": 9,
+          "topicId": "vYs6wfi95ahDO4gPApZC",
+          "type": "layout",
+          "title": "principle of inclusion and exclusion"
+        },
+        {
+          "type": "layout",
+          "title": "stars and bars",
+          "order": 10,
+          "topicId": "4rRknEYue9ph1VnEizuS"
+        },
+        {
+          "type": "layout",
+          "title": "summation using combinatorics",
+          "order": 11,
+          "topicId": "5QLKVn0DjHn9qQKzEmaw"
+        },
+        {
+          "type": "layout",
+          "title": "symmetry in combinatorics",
+          "order": 12,
+          "topicId": "iXUzxKqJ1YbBAvaDiPeA"
+        },
+        {
+          "title": "recursion and dynamic programming",
+          "type": "layout",
+          "topicId": "shh0rRNyxyxrSLWxUEne",
+          "order": 13
+        },
+        {
+          "title": "1-1 correspondence (bijection)",
+          "type": "layout",
+          "topicId": "n9OjSGl5LJCjoQ4X1E7k",
+          "order": 14
+        },
+        {
+          "title": "reflection principle",
+          "type": "layout",
+          "topicId": "5afo7Uzg63PfaMS1dfC2",
+          "order": 15
+        }
+      ],
+      "title": "Combinatorics",
+      "totalTopics": 15,
+      "createdAt": "2025-11-24T16:00:47.592Z",
+      "courseId": "pxeKbx6V6C2IeBy1UnWm"
+    },
+    {
+      "_id": "kd2OP0cTjIO3wtJvOTah",
+      "topicMeta": [
+        {
+          "order": 1,
+          "topicId": "YkzS124o5oG0bPUvAQUH",
+          "type": "layout",
+          "title": "small, special and random cases"
+        },
+        {
+          "order": 2,
+          "topicId": "IyUyLXB4Pwvl2jMohT0C",
+          "type": "layout",
+          "title": "invariants"
+        },
+        {
+          "title": "monovariants",
+          "type": "layout",
+          "topicId": "woJytRvewnI7iAkloRJ7",
+          "order": 3
+        },
+        {
+          "title": "pigeonhole principle",
+          "type": "layout",
+          "topicId": "3XtB1dnBpkPJrrqLumXv",
+          "order": 4
+        },
+        {
+          "type": "layout",
+          "title": "proof by coloring",
+          "order": 5,
+          "topicId": "6gDOHPBxKP5iRE7T5qJ0"
+        },
+        {
+          "topicId": "y16zzfDZ43rP0Cah9cxE",
+          "order": 7,
+          "title": "symmetry",
+          "type": "layout"
+        },
+        {
+          "topicId": "ygXNhFQF1TLBp0Jon5eQ",
+          "order": 6,
+          "title": "induction",
+          "type": "layout"
+        }
+      ],
+      "title": "Brainteasers",
+      "order": 5,
+      "isPublished": true,
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "totalTopics": 7,
+      "createdAt": "2025-11-24T15:58:28.541Z"
+    },
+    {
+      "_id": "uxviKijYQeT7Ixg7x7Wd",
+      "courseId": "pxeKbx6V6C2IeBy1UnWm",
+      "totalTopics": 5,
+      "createdAt": "2025-11-24T16:02:02.352Z",
+      "topicMeta": [
+        {
+          "topicId": "qEPZTCg30M3xXEbzWvN3",
+          "order": 1,
+          "title": "just expected value problems in disguise",
+          "type": "layout"
+        },
+        {
+          "title": "present vs future",
+          "type": "layout",
+          "topicId": "dImg3bmC65mto8nmHyEZ",
+          "order": 2
+        },
+        {
+          "topicId": "S28233EQSzmVa3wg2PD5",
+          "order": 3,
+          "title": "optimal parameters",
+          "type": "layout"
+        },
+        {
+          "order": 4,
+          "topicId": "YgdKxC4nJa1ZOc7fCYzr",
+          "type": "layout",
+          "title": "dynamic programming in betting games"
+        },
+        {
+          "title": "lessons from the past",
+          "type": "layout",
+          "topicId": "paVVoe3URzTZ7wIFe55a",
+          "order": 5
+        }
+      ],
+      "title": "Betting Games",
+      "order": 10,
+      "isPublished": true
+    }
+  ]
+}

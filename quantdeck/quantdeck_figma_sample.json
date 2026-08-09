@@ -1,0 +1,145 @@
+{
+  "meta": {
+    "app": "QuantDeck",
+    "description": "Quantitative finance interview prep platform. Problems are scraped from quantprof.org, processed, and embedded directly into the HTML. A Python script (update_deploy.py) re-embeds fresh JSON and pushes to GitHub Pages automatically.",
+    "totalProblems": 833,
+    "sampleSize": 8,
+    "dataFlow": "scraper → quantprof_problems.json → update_deploy.py → index.html (embedded) → GitHub Pages",
+    "sync": {
+      "solved": "optional recipient-owned cloud sync",
+      "saved": "optional recipient-owned cloud sync",
+      "notes": "optional recipient-owned cloud sync",
+      "fallback": "localStorage for all three when offline"
+    }
+  },
+  "problems": [
+    {
+      "_id": "prob_001",
+      "order": 1,
+      "title": "Non-empty Intersection",
+      "level": "7",
+      "topic": "probability",
+      "askedIn": [
+        { "name": "Jane Street", "logoURL": "" },
+        { "name": "Jump Trading", "logoURL": "" }
+      ],
+      "question": "Five intervals are chosen uniformly at random from [0,1]. What is the probability that they all share a common point?",
+      "answer": "6/16",
+      "hint1": "Think about what it means for all intervals to share a common point.",
+      "hint2": "Consider the maximum of the left endpoints and the minimum of the right endpoints.",
+      "solution": "The intervals share a common point iff max(l_i) ≤ min(r_i). By symmetry this reduces to a clean combinatorial argument.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_002",
+      "order": 2,
+      "title": "Gambler's Ruin",
+      "level": "5",
+      "topic": "probability",
+      "askedIn": [
+        { "name": "Citadel", "logoURL": "" }
+      ],
+      "question": "A gambler starts with $k and plays a fair coin-flip game, winning or losing $1 each round. What is the probability they reach $N before going broke?",
+      "answer": "k/N",
+      "hint1": "Set up a system of equations using first-step analysis.",
+      "hint2": "For a fair game, the solution is linear.",
+      "solution": "By the optional stopping theorem, the expected wealth is a martingale, so P(reach N) = k/N.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_003",
+      "order": 3,
+      "title": "Expected Maximum of Uniform",
+      "level": "4",
+      "topic": "statistics",
+      "askedIn": [
+        { "name": "Two Sigma", "logoURL": "" },
+        { "name": "DE Shaw", "logoURL": "" }
+      ],
+      "question": "You draw n samples independently from Uniform[0,1]. What is the expected value of the maximum?",
+      "answer": "n/(n+1)",
+      "hint1": "Use the CDF of the maximum of n uniforms.",
+      "solution": "E[X_(n)] = n/(n+1) via integration of the order statistic CDF.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_004",
+      "order": 4,
+      "title": "Ant on a Rubber Band",
+      "level": "8",
+      "topic": "brainteasers",
+      "askedIn": [
+        { "name": "Jane Street", "logoURL": "" }
+      ],
+      "question": "An ant walks 1 cm/s on a rubber band that stretches 1 m/s uniformly. The band starts at 1 m. Does the ant ever reach the end?",
+      "answer": "yes",
+      "hint1": "Think about the fraction of the band the ant has covered, not the absolute position.",
+      "hint2": "The harmonic series diverges.",
+      "solution": "Track the ant's fractional position. Each second it gains 1/(L_t) fraction. The total gain is the harmonic series, which diverges — so the ant eventually reaches 1.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_005",
+      "order": 5,
+      "title": "Covariance of Order Statistics",
+      "level": "6",
+      "topic": "statistics",
+      "askedIn": [
+        { "name": "Goldman Sachs", "logoURL": "" }
+      ],
+      "question": "For n iid Uniform[0,1] random variables, find Cov(X_(i), X_(j)) for i ≤ j.",
+      "answer": "i(n-j+1) / ((n+1)^2 (n+2))",
+      "hint1": "Use the joint density of order statistics.",
+      "solution": "Cov(X_(i), X_(j)) = i(n-j+1) / ((n+1)^2(n+2)) from standard order statistic theory.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_006",
+      "order": 6,
+      "title": "Random Walk Returns to Origin",
+      "level": "6",
+      "topic": "probability",
+      "askedIn": [
+        { "name": "Optiver", "logoURL": "" }
+      ],
+      "question": "In a 1D simple random walk, what is the probability of ever returning to the origin?",
+      "answer": "1",
+      "hint1": "Use the recurrence criterion for random walks.",
+      "solution": "The 1D simple random walk is recurrent: it returns to the origin with probability 1. This follows from the divergence of sum 1/sqrt(n).",
+      "type": "question"
+    },
+    {
+      "_id": "prob_007",
+      "order": 7,
+      "title": "Fair Coin from Biased Coin",
+      "level": "3",
+      "topic": "probability",
+      "askedIn": [
+        { "name": "Akuna Capital", "logoURL": "" },
+        { "name": "Citadel", "logoURL": "" }
+      ],
+      "question": "You have a biased coin with unknown bias p. How do you simulate a fair coin flip?",
+      "answer": "von Neumann extractor",
+      "hint1": "Flip the coin twice. Some outcomes are symmetric.",
+      "solution": "Flip twice. If HT → output H, TH → output T, HH or TT → repeat. Both HT and TH have probability p(1-p), so the output is unbiased.",
+      "type": "question"
+    },
+    {
+      "_id": "prob_008",
+      "order": 8,
+      "title": "Black-Scholes Put-Call Parity",
+      "level": "5",
+      "topic": "calculus",
+      "askedIn": [
+        { "name": "Goldman Sachs", "logoURL": "" },
+        { "name": "Morgan Stanley", "logoURL": "" }
+      ],
+      "question": "Derive the put-call parity relationship for European options on a non-dividend-paying stock.",
+      "answer": "C - P = S - Ke^{-rT}",
+      "hint1": "Consider two portfolios that have the same payoff at expiry.",
+      "hint2": "One portfolio: long call + cash Ke^{-rT}. Other: long put + long stock.",
+      "solution": "At expiry both portfolios pay max(S_T, K). By no-arbitrage they must have the same value today: C + Ke^{-rT} = P + S, i.e. C - P = S - Ke^{-rT}.",
+      "type": "question"
+    }
+  ]
+}

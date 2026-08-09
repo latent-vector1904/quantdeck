@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantDeck</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<style>
+/* ── Reset ───────────────────────────────────────────────────── */
+:root {
+    /* quantprof.org exact tokens */
+    --bg:          hsl(220 13% 8%);
+    --bg-card:     hsl(220 13% 10%);
+    --bg-muted:    hsl(215 25% 12%);
+    --bg-hover:    hsl(220 13% 9.5%);
+    --bg-accent:   hsl(215 25% 18%);
+    --border:      hsl(215 25% 15%);
+    --border-soft: hsl(215 25% 12%);
+    --text:        hsl(210 40% 98%);
+    --text-dim:    hsl(215 20% 65%);
+    --text-faint:  hsl(215 20% 38%);
+    /* Primary neon green */
+    --green:       hsl(122 97% 50%);
+    --green-dim:   hsl(122 97% 60%);
+    --green-bg:    hsl(122 97% 50% / .10);
+    --green-bdr:   hsl(122 97% 50% / .28);
+    /* Solved / Completed */
+    --solved:      #22c55e;
+    --solved-bg:   rgba(34,197,94,.12);
+    --solved-bdr:  rgba(34,197,94,.28);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+button  { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+input, select { font-family: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+img { display: block; }
+
+/* ── LIST VIEW ─────────────────────────────────────────────── */
+#list-view {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 44px 80px;
+}
+
+/* Filters */
+.filters-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 36px;
+}
+.filter-group { display: flex; flex-direction: column; gap: 10px; }
+.filter-group label {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: .01em;
+}
+.filter-group input,
+.filter-group select {
+    padding: 13px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-size: 15px;
+    transition: border-color .15s;
+    width: 100%;
+}
+.filter-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath fill='%2394a3b8' d='M0.5 0.5l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 38px;
+    cursor: pointer;
+}
+.filter-group input:focus,
+.filter-group select:focus { outline: none; border-color: var(--green); }
+.filter-group input::placeholder { color: var(--text-faint); }
+
+/* Table meta */
+.table-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 15px;
+    color: var(--text-faint);
+}
+.table-meta .solved-ct { color: var(--solved); font-weight: 600; }
+
+/* Daily counter */
+.table-meta .today-ct {
+    color: #fbbf24;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(251,191,36,.28);
+    background: rgba(251,191,36,.10);
+    transition: background .15s, border-color .15s;
+}
+.table-meta .today-ct:hover { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.5); }
+.daily-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 50;
+    width: 280px;
+    padding: 16px;
+    background: var(--card, #16161e);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.45);
+    cursor: default;
+    display: none;
+}
+.daily-panel.open { display: block; }
+.daily-panel h4 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: var(--text, #e8e8f0);
+    font-weight: 700;
+}
+.daily-panel .dp-sub {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--text-faint);
+    font-weight: 500;
+}
+.daily-panel .dp-streak {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.daily-panel .dp-stat {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.04);
+}
+.daily-panel .dp-stat b { display: block; font-size: 20px; color: #fbbf24; }
+.daily-panel .dp-stat span { font-size: 11px; color: var(--text-faint); }
+.daily-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 12px;
+}
+.daily-row .dr-day { width: 56px; color: var(--text-faint); flex-shrink: 0; }
+.daily-row .dr-bar-wrap { flex: 1; height: 10px; background: rgba(255,255,255,.06); border-radius: 5px; overflow: hidden; }
+.daily-row .dr-bar { height: 100%; background: linear-gradient(90deg,#f59e0b,#fbbf24); border-radius: 5px; min-width: 2px; }
+.daily-row.is-today .dr-day { color: #fbbf24; font-weight: 700; }
+.daily-row .dr-n { width: 16px; text-align: right; color: var(--text, #e8e8f0); flex-shrink: 0; }
+
+/* Table wrapper — rounded border card */
+.table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Table */
+.prob-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.prob-table thead th {
+    padding: 13px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+}
+.prob-table thead th.th-status { text-align: center; }
+.prob-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .1s;
+}
+.prob-table tbody tr:last-child { border-bottom: none; }
+.prob-table tbody tr { transition: background .15s; }
+.prob-table tbody tr:hover { background: var(--bg-hover); }
+.prob-table tbody tr:hover .td-num,
+.prob-table tbody tr:hover .td-title { color: var(--green); }
+.prob-table tbody td {
+    padding: 20px 20px;
+    vertical-align: middle;
+    transition: color .15s;
+}
+.td-num {
+    width: 70px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.td-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+}
+.td-title.is-solved { color: #fff; }
+.td-status { text-align: center; width: 80px; }
+
+/* Topic pill */
+.topic-pill {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    letter-spacing: .01em;
+}
+
+/* Difficulty pill — colors set via inline style by JS */
+.diff-pill {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: .01em;
+    border: 1px solid transparent;
+}
+
+/* Company logos */
+.co-row { display: flex; gap: 5px; align-items: center; }
+.co-logo {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #fff;
+    flex-shrink: 0;
+}
+.co-dash { color: var(--text-faint); font-size: 18px; }
+
+/* Status icon */
+.status-icon {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color .15s, transform .12s, color .15s;
+}
+.status-icon:hover { border-color: var(--text-faint); color: var(--text-faint); transform: scale(1.08); }
+.status-icon.done { border-color: var(--solved); color: var(--solved); }
+.status-icon.done:hover { border-color: var(--solved); color: var(--solved); opacity: .8; }
+.status-icon svg { width: 14px; height: 14px; }
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 36px;
+    padding-bottom: 20px;
+}
+.page-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-size: 14px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color .15s, background .15s;
+    white-space: nowrap;
+}
+.page-btn:hover:not(:disabled) { color: var(--text); background: var(--bg-card); }
+.page-btn:disabled { opacity: .3; pointer-events: none; }
+.page-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.page-num {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    font-size: 14px;
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.page-num:hover { color: var(--text); background: var(--bg-card); }
+.page-num.active {
+    background: var(--bg-muted);
+    color: var(--text);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+/* Empty */
+.tbl-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 15px;
+}
+
+/* Status filter pills */
+.status-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+.status-pill {
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.status-pill:hover { border-color: var(--text-faint); color: var(--text); }
+.status-pill.active { background: var(--bg-muted); color: var(--text); border-color: var(--text-faint); }
+
+/* Bookmark in table */
+.td-bookmark { width: 36px; text-align: center; padding-left: 4px !important; padding-right: 0 !important; }
+.bm-icon {
+    width: 18px; height: 18px;
+    color: var(--text-faint);
+    opacity: 0.25;
+    cursor: pointer;
+    transition: all .15s;
+    vertical-align: middle;
+}
+.bm-icon:hover { opacity: 0.6; }
+.bm-icon.saved { opacity: 1; color: hsl(45,93%,58%); }
+
+/* Save button (detail) */
+.save-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.save-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.save-btn.saved { color: hsl(45,93%,58%); border-color: hsl(45,93%,58%/.3); }
+.save-btn svg { width: 16px; height: 16px; }
+
+/* Notes split-pane (sidebar) */
+.notes-area {
+    width: 100%;
+    flex: 1;
+    min-height: 220px;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14.5px;
+    line-height: 1.7;
+    resize: none;
+    transition: border-color .15s;
+    box-sizing: border-box;
+}
+.notes-area:focus { outline: none; border-color: var(--green); }
+.notes-area::placeholder { color: var(--text-faint); }
+.notes-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+.notes-saved {
+    font-size: 12px;
+    color: var(--green-dim);
+    opacity: 0;
+    transition: opacity .3s;
+}
+.notes-saved.show { opacity: 1; }
+.notes-count { font-size: 12px; color: var(--text-faint); }
+
+.notes-side-pane {
+    flex-shrink: 0;
+    width: 0;
+    overflow: hidden;
+    background: var(--bg-card);
+    border-left: 1px solid transparent;
+    transition: width .25s ease, border-color .25s ease;
+    position: sticky;
+    top: 60px;
+    align-self: flex-start;
+    height: calc(100vh - 60px);
+}
+.notes-side-pane.open { width: 380px; border-left-color: var(--border); }
+.notes-side-inner {
+    width: 380px;
+    height: 100%;
+    padding: 22px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+.notes-side-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.notes-side-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: .2px;
+    text-transform: uppercase;
+}
+.notes-side-close {
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .12s;
+}
+.notes-side-close:hover { color: var(--text); background: var(--bg-muted); }
+.notes-side-close svg { width: 14px; height: 14px; }
+
+/* Notes toggle button (in tab-right) */
+.notes-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.notes-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.notes-btn.active { color: hsl(142,71%,49%); border-color: hsl(142,71%,52%/.35); background: hsl(142,71%,49%/.06); }
+.notes-btn svg { width: 16px; height: 16px; }
+
+/* Saved count in table-meta */
+.saved-ct { color: hsl(45,90%,58%); font-weight: 600; }
+
+/* ── FOCUS MODE ─────────────────────────────────────────────── */
+.focus-wrap { position: relative; }
+.focus-btn {
+    position: relative;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.focus-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.focus-btn.running { color: hsl(142,71%,52%); border-color: hsl(142,71%,52%/.35); background: hsl(142,71%,49%/.06); }
+.focus-btn svg { width: 16px; height: 16px; }
+.focus-btn .pulse-dot {
+    position: absolute;
+    top: 5px; right: 5px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: hsl(142,71%,52%);
+    display: none;
+}
+.focus-btn.running .pulse-dot {
+    display: block;
+    box-shadow: 0 0 0 0 hsl(142,71%,52%/.7);
+    animation: focus-pulse 1.6s ease-out infinite;
+}
+.focus-btn.paused .pulse-dot { display: block; background: hsl(45,90%,58%); animation: none; }
+@keyframes focus-pulse {
+    0%   { box-shadow: 0 0 0 0   hsl(142,71%,52%/.7); }
+    70%  { box-shadow: 0 0 0 8px hsl(142,71%,52%/0); }
+    100% { box-shadow: 0 0 0 0   hsl(142,71%,52%/0); }
+}
+
+.focus-pop {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 14px 38px rgba(0,0,0,.5);
+    z-index: 60;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+}
+.focus-pop.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.focus-pop-time {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.5px;
+    text-align: center;
+    line-height: 1.1;
+}
+.focus-pop-status {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    margin: 4px 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.focus-pop-status .running { color: hsl(142,65%,62%); }
+.focus-pop-status .paused  { color: hsl(45,90%,60%); }
+.focus-pop-next {
+    background: var(--bg-muted);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.focus-pop-next strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.focus-pop-actions { display: flex; gap: 6px; margin-bottom: 14px; }
+.focus-pop-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .12s;
+}
+.focus-pop-actions button:hover { background: var(--bg-muted); color: var(--text); }
+.focus-pop-actions button.primary {
+    background: var(--green); color: hsl(0,0%,8%);
+    border-color: var(--green); font-weight: 700;
+}
+.focus-pop-actions button.primary:hover { opacity: .9; background: var(--green); color: hsl(0,0%,8%); }
+.focus-pop-tl-title {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+}
+.focus-pop-timeline { display: flex; flex-direction: column; gap: 2px; }
+.focus-pop-tl-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    gap: 10px;
+}
+.focus-pop-tl-row .lbl { color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+.focus-pop-tl-row .lbl svg { width: 11px; height: 11px; opacity: .6; }
+.focus-pop-tl-row.unlocked .lbl { color: var(--green-dim); }
+.focus-pop-tl-row.unlocked .lbl svg { display: none; }
+.focus-pop-tl-row .right { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.focus-pop-tl-row .unlock-now {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-decoration: underline;
+    opacity: .65;
+}
+.focus-pop-tl-row .unlock-now:hover { color: var(--text); opacity: 1; }
+.focus-pop-tl-row.unlocked .right { color: var(--green-dim); font-weight: 600; font-size: 11px; }
+
+/* Locked hint/solution cards */
+.coll-card.locked .coll-body { display: none !important; }
+.coll-card.locked .coll-head { cursor: default; opacity: .85; }
+.coll-card.locked .coll-head:hover { background: transparent; }
+.coll-card.locked .coll-chev { display: none; }
+.coll-card.locked .coll-label { display: flex; align-items: center; gap: 8px; }
+.lock-meta {
+    font-size: 12px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+}
+.lock-unlock {
+    margin-left: 10px;
+    padding: 4px 11px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .12s;
+}
+.lock-unlock:hover { background: var(--bg-muted); color: var(--text); border-color: var(--bg-accent); }
+
+/* Detail shell (for split-pane) */
+.detail-shell {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+    width: 100%;
+}
+.detail-shell > .detail-content { flex: 1; min-width: 0; }
+
+/* ── DETAIL VIEW ─────────────────────────────────────────────── */
+#detail-view {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+/* Top bar */
+.detail-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 44px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    row-gap: 10px;
+}
+/* Layout: Completed (left) | Back (center) | Nav (right) */
+.detail-bar-left,
+.detail-bar-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+.detail-bar-right { justify-content: flex-end; gap: 8px; }
+.completed-tag {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--solved);
+}
+.completed-tag svg { width: 18px; height: 18px; }
+.back-btn {
+    padding: 9px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .15s;
+}
+.back-btn:hover { background: var(--bg-muted); }
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-faint);
+    cursor: pointer;
+    transition: color .15s, background .15s, border-color .15s;
+    white-space: nowrap;
+}
+.nav-btn:hover { color: var(--text); border-color: var(--text-faint); background: var(--bg-card); }
+.nav-btn:disabled { opacity: .35; pointer-events: none; }
+.nav-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Content */
+.detail-content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 34px 44px 100px;
+    width: 100%;
+}
+
+/* Tab row */
+.tab-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 28px;
+    gap: 16px;
+}
+.tab-switch {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+}
+.tab-btn {
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all .15s;
+}
+.tab-btn.active { background: var(--bg-muted); color: var(--text); }
+.tab-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.level-pill {
+    padding: 5px 14px;
+    background: var(--green-bg);
+    border: 1px solid var(--green-bdr);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-dim);
+    white-space: nowrap;
+}
+.share-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.share-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.share-btn svg { width: 15px; height: 15px; }
+
+/* Asked-in inline (detail tab row) */
+.asked-in-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 4px;
+}
+.asked-in-lbl {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+.asked-in-logos { display: flex; align-items: center; gap: 5px; }
+.asked-in-logos img {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+/* Problem */
+.prob-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.4px;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 24px;
+}
+.prob-body {
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--text-dim);
+}
+.prob-body p { margin-bottom: 14px; }
+.prob-body img { max-width:100%; margin:14px 0; border-radius:6px; background:#fff; padding:4px; }
+
+/* Answer */
+.answer-section { border-top: 1px solid var(--border); margin-top: 32px; padding-top: 28px; }
+.answer-row { display: flex; gap: 12px; align-items: stretch; }
+.answer-input {
+    flex: 1;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--text);
+    transition: border-color .15s;
+}
+.answer-input:focus { outline: none; border-color: var(--green); }
+.answer-input::placeholder { color: var(--text-faint); }
+.submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 24px;
+    background: var(--green);
+    color: hsl(0,0%,8%);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.submit-btn:hover { opacity: .85; }
+.submit-btn svg { width: 15px; height: 15px; }
+.ans-feedback {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 18px;
+}
+.ans-feedback.correct { color: var(--green-dim); }
+.ans-feedback.wrong   { color: hsl(0,84%,60%); }
+.ans-feedback.shown   { color: var(--text-dim); }
+.mark-btn {
+    margin-top: 14px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all .15s;
+}
+.mark-btn:hover { border-color: var(--green-dim); color: var(--green-dim); }
+.mark-btn.done { background: var(--green); border-color: var(--green); color: hsl(0,0%,8%); font-weight: 600; }
+
+/* Collapsible */
+.sol-section { display: flex; flex-direction: column; gap: 8px; }
+.coll-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    overflow: hidden;
+}
+.coll-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .12s;
+}
+.coll-head:hover { background: var(--bg-muted); }
+.coll-label { font-size: 15px; font-weight: 500; color: var(--text-dim); }
+.coll-label.hint-lbl { color: var(--green-dim); }
+.coll-chev { color: var(--text-faint); flex-shrink: 0; transition: transform .2s; }
+.coll-card.open .coll-chev { transform: rotate(180deg); }
+.coll-body {
+    display: none;
+    padding: 6px 20px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-dim);
+}
+.coll-card.open .coll-body { display: block; }
+.coll-body p { margin-bottom: 12px; }
+.coll-body img { max-width:100%; margin:12px 0; border-radius:6px; background:#fff; padding:4px; }
+
+/* KaTeX */
+.katex { font-size: 1em; }
+.katex-display { margin: .9em 0; overflow-x: auto; }
+
+/* ── NAVBAR ──────────────────────────────────────────────────── */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 60px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+}
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+.nav-logo-text {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.3px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 860px) {
+    .navbar { padding: 0 16px; }
+    .nav-link:not(.active):not(.premium) { display: none; }
+    #list-view { padding: 24px 20px 60px; }
+    .filters-row { grid-template-columns: 1fr; gap: 14px; }
+    .prob-table thead th.hide-sm,
+    .prob-table tbody td.hide-sm { display: none; }
+    .detail-bar { padding: 12px 20px; }
+    .detail-content { padding: 22px 20px 60px; }
+    .prob-title { font-size: 20px; }
+    .answer-row { flex-direction: column; }
+    .submit-btn { width: 100%; justify-content: center; padding: 14px; }
+    .status-pills { flex-wrap: wrap; }
+    .focus-pop { width: min(320px, calc(100vw - 40px)); right: -8px; }
+    .notes-side-pane {
+        position: fixed;
+        top: 60px; right: 0; bottom: 0;
+        height: auto;
+        z-index: 40;
+        box-shadow: -8px 0 28px rgba(0,0,0,.45);
+    }
+    .notes-side-pane.open { width: 100%; max-width: 380px; }
+    .notes-side-inner { width: 100%; }
+}
+@media (max-width: 520px) {
+    .tab-row { flex-wrap: wrap; }
+    .tab-right { margin-left: 0; }
+    .notes-side-pane.open { max-width: 100%; }
+    .notes-side-inner { width: 100vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ─────────────────────────────────────────────────── -->
+<nav class="navbar">
+    <div class="nav-logo" onclick="showList()">
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="30" height="30" rx="6" fill="hsl(142,71%,49%/.12)"/>
+            <rect x="4" y="4" width="9" height="9" rx="2" fill="hsl(142,71%,49%)"/>
+            <rect x="17" y="4" width="9" height="9" rx="2" fill="hsl(142,71%,49%/.4)"/>
+            <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(142,71%,49%/.4)"/>
+            <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(142,71%,49%)"/>
+        </svg>
+        <span class="nav-logo-text">QuantDeck</span>
+    </div>
+</nav>
+
+<!-- ── LIST VIEW ─────────────────────────────────────────────── -->
+<div id="list-view">
+    <div class="filters-row">
+        <div class="filter-group">
+            <label>Search</label>
+            <input type="text" id="f-search" placeholder="Search">
+        </div>
+        <div class="filter-group">
+            <label>Topic</label>
+            <select id="f-topic"><option value="">All</option></select>
+        </div>
+        <div class="filter-group">
+            <label>Difficulty</label>
+            <select id="f-level"><option value="">All Levels</option></select>
+        </div>
+    </div>
+
+    <div class="status-pills">
+        <button class="status-pill active" data-status="all" onclick="setStatus('all')">All</button>
+        <button class="status-pill" data-status="saved" onclick="setStatus('saved')">Saved</button>
+        <button class="status-pill" data-status="unsolved" onclick="setStatus('unsolved')">Unsolved</button>
+    </div>
+
+    <div class="table-meta">
+        <span id="n-shown">0 problems</span>
+        <span style="display:flex;gap:16px;align-items:center">
+            <span class="saved-ct"><span id="n-saved">0</span> saved</span>
+            <span class="solved-ct"><span id="n-solved">0</span> solved</span>
+            <span class="today-ct" id="today-toggle" title="Your daily solving progress">🔥 <span id="n-today">0</span> today
+                <div class="daily-panel" id="daily-panel"></div>
+            </span>
+        </span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="prob-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th class="hide-sm">Topic</th>
+                    <th class="hide-sm">Difficulty</th>
+                    <th class="hide-sm">Asked In</th>
+                    <th class="hide-sm" style="width:36px"></th>
+                    <th class="th-status">Status</th>
+                </tr>
+            </thead>
+            <tbody id="prob-tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- ── DETAIL VIEW ───────────────────────────────────────────── -->
+<div id="detail-view">
+    <div class="detail-bar">
+        <div class="detail-bar-left">
+            <div class="completed-tag" id="completed-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 12l3 3 5-5"/>
+                </svg>
+                Completed
+            </div>
+        </div>
+        <div class="detail-bar-right">
+            <button class="back-btn" onclick="showList()">Back to Problems</button>
+            <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                Previous
+            </button>
+            <button class="nav-btn" id="next-btn" onclick="navigate(1)">
+                Next
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="detail-shell">
+    <div class="detail-content">
+        <div class="tab-row">
+            <div class="tab-switch">
+                <button class="tab-btn active" id="tab-prob" onclick="switchTab('problem')">Problem</button>
+                <button class="tab-btn"         id="tab-sol"  onclick="switchTab('solution')">Solution</button>
+            </div>
+            <div class="tab-right">
+                <span class="level-pill" id="level-pill"></span>
+                <div class="asked-in-row" id="asked-in-row" style="display:none">
+                    <span class="asked-in-lbl">Asked in:</span>
+                    <div class="asked-in-logos" id="asked-in-logos"></div>
+                </div>
+                <div class="focus-wrap">
+                    <button class="focus-btn" id="focus-btn" title="Focus mode" onclick="event.stopPropagation();toggleFocusPop()">
+                        <span class="pulse-dot"></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="9"/>
+                            <polyline points="12 7 12 12 15.5 14"/>
+                        </svg>
+                    </button>
+                    <div class="focus-pop" id="focus-pop">
+                        <div class="focus-pop-time" id="focus-time">00:00</div>
+                        <div class="focus-pop-status" id="focus-status">Off</div>
+                        <div class="focus-pop-next" id="focus-next" style="display:none"></div>
+                        <div class="focus-pop-actions">
+                            <button id="focus-primary" class="primary" onclick="focusPrimary()">Start</button>
+                            <button id="focus-reset" onclick="focusReset()">Reset</button>
+                            <button id="focus-stop" onclick="focusStop()" style="display:none">Stop</button>
+                        </div>
+                        <div class="focus-pop-tl-title">Unlock schedule</div>
+                        <div class="focus-pop-timeline" id="focus-timeline"></div>
+                    </div>
+                </div>
+                <button class="notes-btn" id="notes-btn" title="Notes" onclick="toggleNotesPane()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="9" y1="13" x2="15" y2="13"/>
+                        <line x1="9" y1="17" x2="13" y2="17"/>
+                    </svg>
+                </button>
+                <button class="save-btn" id="save-btn" title="Save for later" onclick="toggleSave()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                    </svg>
+                </button>
+                <button class="share-btn" title="Share" onclick="shareProb()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+                        <polyline points="16 6 12 2 8 6"/>
+                        <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <h1 class="prob-title" id="d-title"></h1>
+
+        <div id="pane-problem">
+            <div class="prob-body" id="d-question"></div>
+            <div class="answer-section" id="d-answer"></div>
+        </div>
+
+        <div id="pane-solution" style="display:none">
+            <div class="sol-section" id="d-hints-sols"></div>
+        </div>
+    </div>
+
+    <aside class="notes-side-pane" id="notes-side">
+        <div class="notes-side-inner">
+            <div class="notes-side-header">
+                <span class="notes-side-title">Notes</span>
+                <button class="notes-side-close" onclick="toggleNotesPane()" title="Close notes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6"  y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <textarea class="notes-area" id="notes-area" placeholder="Write your notes here…"></textarea>
+            <div class="notes-meta">
+                <span class="notes-saved" id="notes-saved">Saved</span>
+                <span class="notes-count" id="notes-count"></span>
+            </div>
+        </div>
+    </aside>
+    </div>
+</div>
+
+<!-- Data injected by builder -->
+<script type="application/json" id="data">__DATA__</script>
+
+<script>
+// ── Load ─────────────────────────────────────────────────────
+const RAW      = JSON.parse(document.getElementById('data').textContent);
+const PROBLEMS = (RAW.problems || RAW || []).filter(p => p.type === 'question' || (!p.type && p.question));
+console.log(`Loaded ${PROBLEMS.length} problems`);
+
+// ── Solved ────────────────────────────────────────────────────
+const SOLVED_KEY = 'qp_solved_v4';
+const solved     = new Set(JSON.parse(localStorage.getItem(SOLVED_KEY) || '[]'));
+const saveSolved = () => localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
+
+const SAVED_KEY  = 'qp_saved_v1';
+const savedQs    = new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'));
+const saveSavedQs = () => localStorage.setItem(SAVED_KEY, JSON.stringify([...savedQs]));
+
+const NOTES_KEY  = 'qp_notes_v1';
+const allNotes   = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+const saveNotes  = () => localStorage.setItem(NOTES_KEY, JSON.stringify(allNotes));
+
+// ── Daily solve log: { 'YYYY-MM-DD': [problemIds] } ──────────
+const DAILY_KEY = 'qp_daily_v1';
+const dailyLog  = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+
+const todayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
+const saveDaily = () => localStorage.setItem(DAILY_KEY, JSON.stringify(dailyLog));
+
+function logSolveToday(id) {
+    const t = todayKey();
+    if (!dailyLog[t]) dailyLog[t] = [];
+    if (!dailyLog[t].includes(id)) { dailyLog[t].push(id); saveDaily(); }
+    updateTodayCount();
+}
+
+function unlogSolveToday(id) {
+    const t = todayKey();
+    if (dailyLog[t] && dailyLog[t].includes(id)) {
+        dailyLog[t] = dailyLog[t].filter(x => x !== id);
+        saveDaily();
+    }
+    updateTodayCount();
+}
+
+function updateTodayCount() {
+    const el = document.getElementById('n-today');
+    if (el) el.textContent = (dailyLog[todayKey()] || []).length;
+    const panel = document.getElementById('daily-panel');
+    if (panel && panel.classList.contains('open')) renderDailyPanel();
+}
+
+function dateKeyOffset(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function computeStreak() {
+    let streak = 0;
+    let i = (dailyLog[todayKey()] || []).length > 0 ? 0 : 1;
+    for (; ; i++) {
+        const n = (dailyLog[dateKeyOffset(i)] || []).length;
+        if (n > 0) streak++;
+        else break;
+    }
+    return streak;
+}
+
+function renderDailyPanel() {
+    const panel = document.getElementById('daily-panel');
+    if (!panel) return;
+
+    const todayN  = (dailyLog[todayKey()] || []).length;
+    const streak  = computeStreak();
+    const best    = Math.max(0, ...Object.values(dailyLog).map(a => (a || []).length));
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const key = dateKeyOffset(i);
+        const n   = (dailyLog[key] || []).length;
+        const d   = new Date();
+        d.setDate(d.getDate() - i);
+        const lbl = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+        days.push({ lbl, n, isToday: i === 0 });
+    }
+    const maxN = Math.max(1, ...days.map(d => d.n));
+
+    panel.innerHTML = `
+        <h4>Daily progress</h4>
+        <p class="dp-sub">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <div class="dp-streak">
+            <div class="dp-stat"><b>${todayN}</b><span>today</span></div>
+            <div class="dp-stat"><b>${streak}🔥</b><span>day streak</span></div>
+            <div class="dp-stat"><b>${best}</b><span>best day</span></div>
+        </div>
+        ${days.map(d => `
+            <div class="daily-row${d.isToday ? ' is-today' : ''}">
+                <span class="dr-day">${d.lbl}</span>
+                <span class="dr-bar-wrap"><span class="dr-bar" style="width:${Math.round(d.n / maxN * 100)}%"></span></span>
+                <span class="dr-n">${d.n}</span>
+            </div>`).join('')}
+    `;
+}
+
+// Panel open/close
+document.getElementById('today-toggle').addEventListener('click', (e) => {
+    if (e.target.closest('.daily-panel')) return;
+    const panel = document.getElementById('daily-panel');
+    const opening = !panel.classList.contains('open');
+    panel.classList.toggle('open', opening);
+    if (opening) renderDailyPanel();
+});
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('daily-panel');
+    if (panel.classList.contains('open') && !e.target.closest('#today-toggle')) {
+        panel.classList.remove('open');
+    }
+});
+
+// ── Topic colours ─────────────────────────────────────────────
+const TOPIC_COLORS = {
+    'probability':    { bg:'rgba(109,40,217,.22)',  fg:'#a78bfa' },
+    'brainteasers':   { bg:'rgba(234,88,12,.22)',   fg:'#fb923c' },
+    'statistics':     { bg:'rgba(37,99,235,.22)',   fg:'#60a5fa' },
+    'calculus':       { bg:'rgba(6,182,212,.2)',    fg:'#22d3ee' },
+    'linear algebra': { bg:'rgba(5,150,105,.22)',   fg:'#34d399' },
+    'game theory':    { bg:'rgba(217,119,6,.22)',   fg:'#fbbf24' },
+    'combinatorics':  { bg:'rgba(219,39,119,.22)',  fg:'#f472b6' },
+    'stochastic':     { bg:'rgba(147,51,234,.22)',  fg:'#c084fc' },
+    'finance':        { bg:'rgba(20,184,166,.2)',   fg:'#2dd4bf' },
+    'algorithms':     { bg:'rgba(202,138,4,.22)',   fg:'#facc15' },
+};
+const DEFAULT_COLOR = { bg:'rgba(88,88,120,.2)', fg:'#9090b8' };
+
+function topicColor(t) {
+    if (!t) return DEFAULT_COLOR;
+    const lo = t.toLowerCase();
+    for (const [k, v] of Object.entries(TOPIC_COLORS)) if (lo.includes(k)) return v;
+    return DEFAULT_COLOR;
+}
+
+// Difficulty colour: green ≤3, amber 4-6, red ≥7
+function diffStyle(level) {
+    const l = Number(level);
+    if (!l) return { bg:'rgba(100,100,120,.15)', fg:'hsl(0,0%,55%)', bdr:'rgba(100,100,120,.25)' };
+    if (l <= 3) return { bg:'rgba(34,197,94,.14)',  fg:'hsl(122,65%,58%)',  bdr:'rgba(34,197,94,.28)'  };
+    if (l <= 6) return { bg:'rgba(234,179,8,.14)',  fg:'hsl(45,90%,58%)',   bdr:'rgba(234,179,8,.28)'  };
+    return             { bg:'rgba(239,68,68,.14)',   fg:'hsl(0,82%,63%)',    bdr:'rgba(239,68,68,.28)'  };
+}
+
+// ── Pagination ────────────────────────────────────────────────
+const PAGE_SIZE = 20;
+let curPage  = 1;
+
+// ── State ─────────────────────────────────────────────────────
+let filtered = [...PROBLEMS];
+let current  = null;
+let curTab   = 'problem';
+let statusFilter = 'all';
+
+// ── Populate selects ──────────────────────────────────────────
+const topicSel = document.getElementById('f-topic');
+const levelSel = document.getElementById('f-level');
+
+[...new Set(PROBLEMS.map(p => p.topic).filter(Boolean))].sort().forEach(t => {
+    const o = document.createElement('option'); o.value = t; o.textContent = t; topicSel.appendChild(o);
+});
+[...new Set(PROBLEMS.map(p => Number(p.level)).filter(n => n > 0 && !isNaN(n)))].sort((a,b)=>a-b).forEach(l => {
+    const o = document.createElement('option'); o.value = l; o.textContent = `Level ${l}`; levelSel.appendChild(o);
+});
+
+// ── Filters ───────────────────────────────────────────────────
+const applyFilters = () => {
+    const q  = document.getElementById('f-search').value.toLowerCase().trim();
+    const tp = topicSel.value;
+    const lv = levelSel.value;
+    filtered = PROBLEMS.filter(p => {
+        if (q && !['title','normalisedTitle','normalizedTitle'].some(k => (p[k]||'').toLowerCase().includes(q))) return false;
+        if (tp && p.topic !== tp) return false;
+        if (lv && String(p.level) !== lv) return false;
+        if (statusFilter === 'saved' && !savedQs.has(p._id)) return false;
+        if (statusFilter === 'unsolved' && solved.has(p._id)) return false;
+        return true;
+    });
+    curPage = 1;
+    renderList();
+};
+
+const setStatus = (s) => {
+    statusFilter = s;
+    document.querySelectorAll('.status-pill').forEach(el => el.classList.toggle('active', el.dataset.status === s));
+    applyFilters();
+};
+
+document.getElementById('f-search').addEventListener('input', applyFilters);
+topicSel.addEventListener('change', applyFilters);
+levelSel.addEventListener('change', applyFilters);
+
+// ── Helpers ───────────────────────────────────────────────────
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const rich = s => {
+    if (!s) return '';
+    return String(s).split(/(<img\s[^>]*>)/i)
+        .map(part => /^<img\s/i.test(part) ? part : esc(part).replace(/\n/g,'<br/>'))
+        .join('');
+};
+
+const SVG_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>`;
+
+// ── List render ───────────────────────────────────────────────
+const tbody = document.getElementById('prob-tbody');
+const paginEl = document.getElementById('pagination');
+
+const renderList = () => {
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (curPage > totalPages) curPage = totalPages;
+
+    const start = (curPage - 1) * PAGE_SIZE;
+    const page  = filtered.slice(start, start + PAGE_SIZE);
+
+    document.getElementById('n-shown').textContent = `${filtered.length} problem${filtered.length === 1 ? '' : 's'}`;
+    document.getElementById('n-solved').textContent = solved.size;
+    document.getElementById('n-saved').textContent = savedQs.size;
+
+    tbody.innerHTML = '';
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="tbl-empty">No problems match your filters.</div></td></tr>`;
+        paginEl.innerHTML = '';
+        return;
+    }
+
+    const SVG_BM = (filled) => `<svg class="bm-icon${filled?' saved':''}" viewBox="0 0 24 24" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`;
+
+    const frag = document.createDocumentFragment();
+    for (const p of page) {
+        const isSolved = solved.has(p._id);
+        const isSavedQ = savedQs.has(p._id);
+        const tc       = topicColor(p.topic);
+        const logos    = (p.askedIn || []).filter(c => c.logoURL).slice(0, 5);
+
+        const dc = diffStyle(p.level);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="td-num">${p.order || ''}</td>
+            <td class="td-bookmark hide-sm">${SVG_BM(isSavedQ)}</td>
+            <td class="td-title${isSolved ? ' is-solved' : ''}">${esc(p.title || 'Untitled')}</td>
+            <td class="hide-sm">
+                ${p.topic
+                    ? `<span class="topic-pill" style="background:${tc.bg};color:${tc.fg}">${esc(p.topic)}</span>`
+                    : ''}
+            </td>
+            <td class="hide-sm">
+                <span class="diff-pill" style="background:${dc.bg};color:${dc.fg};border-color:${dc.bdr}">${p.level || '?'}/10</span>
+            </td>
+            <td class="hide-sm">
+                ${logos.length
+                    ? `<div class="co-row">${logos.map(c => `<img class="co-logo" src="${esc(c.logoURL)}" alt="${esc(c.name||'')}" onerror="this.style.display='none'">`).join('')}</div>`
+                    : `<span class="co-dash">—</span>`}
+            </td>
+            <td class="td-status">
+                <span class="status-icon${isSolved ? ' done' : ''}">${isSolved ? SVG_CHECK : ''}</span>
+            </td>`;
+        tr.addEventListener('click', (e) => {
+            if (e.target.closest('.bm-icon')) {
+                e.stopPropagation();
+                if (savedQs.has(p._id)) savedQs.delete(p._id); else savedQs.add(p._id);
+                saveSavedQs();
+                const bm = tr.querySelector('.bm-icon');
+                bm.classList.toggle('saved');
+                bm.setAttribute('fill', savedQs.has(p._id) ? 'currentColor' : 'none');
+                document.getElementById('n-saved').textContent = savedQs.size;
+                return;
+            }
+            if (e.target.closest('.status-icon')) {
+                e.stopPropagation();
+                if (solved.has(p._id)) { solved.delete(p._id); unlogSolveToday(p._id); }
+                else { solved.add(p._id); logSolveToday(p._id); }
+                saveSolved();
+                const on = solved.has(p._id);
+                const icon = e.target.closest('.status-icon');
+                icon.classList.toggle('done', on);
+                icon.innerHTML = on ? SVG_CHECK : '';
+                const titleEl = tr.querySelector('.td-title');
+                if (titleEl) titleEl.classList.toggle('is-solved', on);
+                document.getElementById('n-solved').textContent = solved.size;
+                if (statusFilter === 'unsolved' || statusFilter === 'saved') applyFilters();
+                return;
+            }
+            openProblem(p);
+        });
+        frag.appendChild(tr);
+    }
+    tbody.appendChild(frag);
+
+    // Pagination
+    renderPagination(totalPages);
+};
+
+const renderPagination = (totalPages) => {
+    if (totalPages <= 1) { paginEl.innerHTML = ''; return; }
+
+    let html = `
+        <button class="page-btn" onclick="goPage(${curPage-1})" ${curPage===1?'disabled':''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            Previous
+        </button>`;
+
+    // Show a smart window of page numbers
+    const window = 2;
+    let pages = new Set([1, totalPages]);
+    for (let p = Math.max(1, curPage - window); p <= Math.min(totalPages, curPage + window); p++) pages.add(p);
+    const sorted = [...pages].sort((a,b)=>a-b);
+
+    let prev = 0;
+    for (const p of sorted) {
+        if (prev && p - prev > 1) html += `<span class="page-num" style="pointer-events:none;color:#303048">…</span>`;
+        html += `<span class="page-num${p===curPage?' active':''}" onclick="goPage(${p})">${p}</span>`;
+        prev = p;
+    }
+
+    html += `
+        <button class="page-btn" onclick="goPage(${curPage+1})" ${curPage===totalPages?'disabled':''}>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>`;
+
+    paginEl.innerHTML = html;
+};
+
+const goPage = (p) => {
+    curPage = p;
+    renderList();
+    window.scrollTo(0, 0);
+};
+
+// ── View toggle ───────────────────────────────────────────────
+const showList = () => {
+    document.getElementById('list-view').style.display   = '';
+    document.getElementById('detail-view').style.display = 'none';
+    current = null;
+    renderList();
+    window.scrollTo(0, 0);
+};
+
+const openProblem = (p) => {
+    current = p; curTab = 'problem';
+    document.getElementById('list-view').style.display   = 'none';
+    document.getElementById('detail-view').style.display = 'flex';
+    renderDetail();
+    window.scrollTo(0, 0);
+};
+
+// ── Detail ────────────────────────────────────────────────────
+const renderDetail = () => {
+    const p = current; if (!p) return;
+    const isSolved = solved.has(p._id);
+
+    document.getElementById('completed-tag').style.display = isSolved ? 'flex' : 'none';
+
+    const idx = filtered.findIndex(x => x._id === p._id);
+    document.getElementById('prev-btn').disabled = idx <= 0;
+    document.getElementById('next-btn').disabled = idx >= filtered.length - 1;
+
+    const lp = document.getElementById('level-pill');
+    lp.textContent = `Lvl ${p.level || '?'}/10`;
+    const dc = diffStyle(p.level);
+    lp.style.background   = dc.bg;
+    lp.style.color        = dc.fg;
+    lp.style.borderColor  = dc.bdr;
+
+    // Asked-in (companies)
+    const askedRow   = document.getElementById('asked-in-row');
+    const askedLogos = document.getElementById('asked-in-logos');
+    const dLogos     = (p.askedIn || []).filter(c => c.logoURL).slice(0, 5);
+    if (dLogos.length) {
+        askedLogos.innerHTML = dLogos.map(c =>
+            `<img src="${esc(c.logoURL)}" alt="${esc(c.name||'')}" onerror="this.style.display='none'">`
+        ).join('');
+        askedRow.style.display = 'flex';
+    } else {
+        askedRow.style.display = 'none';
+    }
+
+    const saveBtn = document.getElementById('save-btn');
+    const isSavedQ = savedQs.has(p._id);
+    saveBtn.classList.toggle('saved', isSavedQ);
+    saveBtn.querySelector('svg').setAttribute('fill', isSavedQ ? 'currentColor' : 'none');
+
+    document.getElementById('d-title').textContent = p.title || 'Untitled';
+    document.getElementById('d-question').innerHTML = rich(p.question);
+
+    // Answer
+    const ansEl = document.getElementById('d-answer');
+    ansEl.innerHTML = '';
+    if (p.answer != null && String(p.answer).trim() !== '') {
+        ansEl.innerHTML = `
+            <div class="answer-row">
+                <input class="answer-input" id="ans-in" type="text" placeholder="Place answer here" autocomplete="off">
+                <button class="submit-btn" id="ans-sub">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Submit
+                </button>
+            </div>
+            <div class="ans-feedback" id="ans-fb"></div>`;
+
+        const inp  = document.getElementById('ans-in');
+        const fb   = document.getElementById('ans-fb');
+
+        const check = () => {
+            const u = inp.value.trim().toLowerCase();
+            const a = String(p.answer).trim().toLowerCase();
+            if (!u) return;
+            const ok = u === a || (!isNaN(Number(a)) && !isNaN(Number(u)) && Number(u) === Number(a));
+            fb.className = 'ans-feedback ' + (ok ? 'correct' : 'wrong');
+            fb.textContent = ok ? '✓ Correct!' : '✗ Not quite — try again';
+            if (ok && !solved.has(p._id)) {
+                solved.add(p._id); saveSolved();
+                logSolveToday(p._id);
+                document.getElementById('completed-tag').style.display = 'flex';
+                if (typeof renderList === 'function') renderList();
+            }
+        };
+        document.getElementById('ans-sub').addEventListener('click', check);
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+    }
+
+    // Hints & solutions
+    const hs = document.getElementById('d-hints-sols');
+    hs.innerHTML = '';
+    const hints = [p.hint1,p.hint2,p.hint3,p.hint4,p.hint5].filter(h=>h&&h.trim());
+    const sols  = [p.solution,p.solution2,p.solution3].filter(s=>s&&s.trim());
+
+    const makeCard = (label, html, isHint, kind, idx) => {
+        const d = document.createElement('div');
+        d.className = 'coll-card';
+        d.dataset.kind = kind;
+        d.dataset.idx  = String(idx);
+        d.innerHTML = `
+            <div class="coll-head">
+                <span class="coll-label${isHint?' hint-lbl':''}">${label}</span>
+                <span class="lock-meta" style="display:none"></span>
+                <button class="lock-unlock" style="display:none" onclick="event.stopPropagation();focusUnlockNow('${kind}',${idx})">unlock now</button>
+                <svg class="coll-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="coll-body">${html}</div>`;
+        d.querySelector('.coll-head').addEventListener('click', () => {
+            if (d.classList.contains('locked')) return;
+            d.classList.toggle('open');
+            if (d.classList.contains('open')) renderMath(d);
+        });
+        return d;
+    };
+    hints.forEach((h,i) => hs.appendChild(makeCard(`Hint ${i+1}`, rich(h), true,  'hint', i)));
+    sols.forEach((s,i)  => hs.appendChild(makeCard(sols.length>1?`Solution ${i+1}`:'Solution', rich(s), false, 'sol', i)));
+
+    if (document.getElementById('notes-side').classList.contains('open')) loadNotes();
+    if (focusState.on) focusResetTimer();
+    updateFocusUI();
+    rerenderHintLocks();
+
+    switchTab('problem');
+};
+
+// ── Tab switch ────────────────────────────────────────────────
+const switchTab = (tab) => {
+    curTab = tab;
+    document.getElementById('tab-prob').classList.toggle('active', tab === 'problem');
+    document.getElementById('tab-sol').classList.toggle('active',  tab === 'solution');
+    document.getElementById('pane-problem').style.display  = tab === 'problem'  ? '' : 'none';
+    document.getElementById('pane-solution').style.display = tab === 'solution' ? '' : 'none';
+    renderMath(document.getElementById(tab === 'problem' ? 'pane-problem' : 'pane-solution'));
+};
+
+// ── Save toggle ──────────────────────────────────────────────
+const toggleSave = () => {
+    if (!current) return;
+    if (savedQs.has(current._id)) savedQs.delete(current._id); else savedQs.add(current._id);
+    saveSavedQs();
+    const btn = document.getElementById('save-btn');
+    const on = savedQs.has(current._id);
+    btn.classList.toggle('saved', on);
+    btn.querySelector('svg').setAttribute('fill', on ? 'currentColor' : 'none');
+};
+
+// ── Notes (split-pane) ───────────────────────────────────────
+function toggleNotesPane() {
+    const pane = document.getElementById('notes-side');
+    const btn  = document.getElementById('notes-btn');
+    const willOpen = !pane.classList.contains('open');
+    pane.classList.toggle('open', willOpen);
+    btn.classList.toggle('active', willOpen);
+    if (willOpen) {
+        loadNotes();
+        setTimeout(() => document.getElementById('notes-area').focus(), 260);
+    }
+}
+let notesTimer = null;
+const loadNotes = () => {
+    if (!current) return;
+    const area = document.getElementById('notes-area');
+    area.value = allNotes[current._id] || '';
+    updateNotesCount();
+    document.getElementById('notes-saved').classList.remove('show');
+};
+const updateNotesCount = () => {
+    const len = document.getElementById('notes-area').value.length;
+    document.getElementById('notes-count').textContent = len ? `${len} chars` : '';
+};
+document.getElementById('notes-area').addEventListener('input', () => {
+    if (!current) return;
+    clearTimeout(notesTimer);
+    updateNotesCount();
+    notesTimer = setTimeout(() => {
+        const val = document.getElementById('notes-area').value;
+        if (val.trim()) allNotes[current._id] = val; else delete allNotes[current._id];
+        saveNotes();
+        const ind = document.getElementById('notes-saved');
+        ind.classList.add('show');
+        setTimeout(() => ind.classList.remove('show'), 1500);
+    }, 400);
+});
+
+// ── Focus Mode ───────────────────────────────────────────────
+const focusState = {
+    on: false,
+    startedAt: 0,
+    pausedAt: 0,
+    accumulatedPausedMs: 0,
+    unlockedExtra: new Set()
+};
+let focusTickInterval = null;
+
+function focusFmt(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function focusElapsedMs() {
+    if (!focusState.on) return 0;
+    const now = Date.now();
+    const pausedNow = focusState.pausedAt ? (now - focusState.pausedAt) : 0;
+    return now - focusState.startedAt - focusState.accumulatedPausedMs - pausedNow;
+}
+function focusSchedule(p) {
+    if (!p) return [];
+    const hintsN = [p.hint1,p.hint2,p.hint3,p.hint4,p.hint5].filter(h=>h&&h.trim()).length;
+    const solsN  = [p.solution,p.solution2,p.solution3].filter(s=>s&&s.trim()).length;
+    const items = [];
+    for (let i = 0; i < hintsN; i++) {
+        items.push({ kind:'hint', idx:i, label:`Hint ${i+1}`, unlockAt:(10 + i*5)*60*1000 });
+    }
+    if (solsN > 0) {
+        const solAt = hintsN > 0 ? (10 + hintsN*5)*60*1000 : 10*60*1000;
+        for (let j = 0; j < solsN; j++) {
+            const label = solsN > 1 ? `Solution ${j+1}` : 'Solution';
+            items.push({ kind:'sol', idx:j, label, unlockAt: solAt + j*60*1000 });
+        }
+    }
+    return items;
+}
+function focusIsUnlocked(kind, idx) {
+    if (!focusState.on) return true;
+    if (focusState.unlockedExtra.has(`${kind}:${idx}`)) return true;
+    const item = focusSchedule(current).find(x => x.kind===kind && x.idx===idx);
+    if (!item) return true;
+    return focusElapsedMs() >= item.unlockAt;
+}
+function focusStart() {
+    focusState.on = true;
+    focusState.startedAt = Date.now();
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+    if (!focusTickInterval) focusTickInterval = setInterval(focusTick, 1000);
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusStop() {
+    focusState.on = false;
+    focusState.startedAt = 0;
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+    if (focusTickInterval) { clearInterval(focusTickInterval); focusTickInterval = null; }
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusResetTimer() {
+    focusState.startedAt = Date.now();
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+}
+function focusReset() {
+    if (focusState.on) { focusResetTimer(); updateFocusUI(); rerenderHintLocks(); }
+}
+function focusPauseResume() {
+    if (!focusState.on) return;
+    if (focusState.pausedAt) {
+        focusState.accumulatedPausedMs += Date.now() - focusState.pausedAt;
+        focusState.pausedAt = 0;
+    } else {
+        focusState.pausedAt = Date.now();
+    }
+    updateFocusUI();
+}
+function focusPrimary() {
+    if (!focusState.on) focusStart();
+    else focusPauseResume();
+}
+function focusUnlockNow(kind, idx) {
+    if (!focusState.on) return;
+    focusState.unlockedExtra.add(`${kind}:${idx}`);
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusTick() {
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function toggleFocusPop() {
+    const pop = document.getElementById('focus-pop');
+    pop.classList.toggle('open');
+    if (pop.classList.contains('open')) updateFocusUI();
+}
+function updateFocusUI() {
+    const btn = document.getElementById('focus-btn');
+    const running = focusState.on && !focusState.pausedAt;
+    const paused  = focusState.on && !!focusState.pausedAt;
+    btn.classList.toggle('running', running);
+    btn.classList.toggle('paused',  paused);
+
+    const elapsed = focusElapsedMs();
+    document.getElementById('focus-time').textContent = focusFmt(elapsed);
+
+    const statusEl = document.getElementById('focus-status');
+    if (!focusState.on)    statusEl.innerHTML = 'Off';
+    else if (paused)       statusEl.innerHTML = '<span class="paused">Paused</span>';
+    else                   statusEl.innerHTML = '<span class="running">● Running</span>';
+
+    const sched = focusSchedule(current);
+    const next  = focusState.on
+        ? sched.find(x => !focusIsUnlocked(x.kind, x.idx))
+        : null;
+    const nextEl = document.getElementById('focus-next');
+    if (next) {
+        nextEl.style.display = 'flex';
+        nextEl.innerHTML = `<span>Next: ${next.label}</span><strong>${focusFmt(next.unlockAt - elapsed)}</strong>`;
+    } else if (focusState.on && sched.length) {
+        nextEl.style.display = 'flex';
+        nextEl.innerHTML = `<span>All unlocked</span><strong style="color:var(--green-dim)">✓</strong>`;
+    } else {
+        nextEl.style.display = 'none';
+    }
+
+    const primary = document.getElementById('focus-primary');
+    const stopBtn = document.getElementById('focus-stop');
+    if (!focusState.on) {
+        primary.textContent = 'Start';
+        primary.classList.add('primary');
+        stopBtn.style.display = 'none';
+    } else if (paused) {
+        primary.textContent = 'Resume';
+        primary.classList.add('primary');
+        stopBtn.style.display = '';
+    } else {
+        primary.textContent = 'Pause';
+        primary.classList.remove('primary');
+        stopBtn.style.display = '';
+    }
+
+    const tl = document.getElementById('focus-timeline');
+    if (!sched.length) {
+        tl.innerHTML = `<div style="font-size:12px;color:var(--text-faint);padding:6px 8px">No hints or solution for this problem.</div>`;
+    } else {
+        const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+        tl.innerHTML = sched.map(x => {
+            const unlocked = focusIsUnlocked(x.kind, x.idx);
+            const rem = Math.max(0, x.unlockAt - elapsed);
+            const right = unlocked
+                ? `<span class="right">UNLOCKED</span>`
+                : focusState.on
+                    ? `<span class="right">${focusFmt(rem)}<span class="unlock-now" onclick="focusUnlockNow('${x.kind}',${x.idx})">unlock</span></span>`
+                    : `<span class="right">${focusFmt(x.unlockAt)}</span>`;
+            return `<div class="focus-pop-tl-row${unlocked?' unlocked':''}"><span class="lbl">${unlocked?'':LOCK_SVG}${x.label}</span>${right}</div>`;
+        }).join('');
+    }
+}
+function rerenderHintLocks() {
+    if (!current) return;
+    const cards = document.querySelectorAll('#d-hints-sols .coll-card');
+    const elapsed = focusElapsedMs();
+    const sched = focusSchedule(current);
+    cards.forEach(card => {
+        const kind = card.dataset.kind;
+        const idx  = parseInt(card.dataset.idx, 10);
+        const unlocked = focusIsUnlocked(kind, idx);
+        const item = sched.find(x => x.kind===kind && x.idx===idx);
+        card.classList.toggle('locked', !unlocked);
+        const meta  = card.querySelector('.lock-meta');
+        const unBtn = card.querySelector('.lock-unlock');
+        if (!unlocked && item) {
+            meta.style.display = '';
+            meta.textContent = focusFmt(Math.max(0, item.unlockAt - elapsed));
+            unBtn.style.display = '';
+            if (card.classList.contains('open')) card.classList.remove('open');
+        } else {
+            meta.style.display = 'none';
+            unBtn.style.display = 'none';
+        }
+    });
+}
+
+document.addEventListener('click', (e) => {
+    const pop = document.getElementById('focus-pop');
+    if (!pop.classList.contains('open')) return;
+    if (e.target.closest('.focus-wrap')) return;
+    pop.classList.remove('open');
+});
+
+// ── Navigate ─────────────────────────────────────────────────
+const navigate = (dir) => {
+    if (!current) return;
+    const idx  = filtered.findIndex(p => p._id === current._id);
+    const next = filtered[idx + dir];
+    if (next) openProblem(next);
+};
+
+// ── KaTeX ─────────────────────────────────────────────────────
+const DELIMITERS = [
+    { left:'$$', right:'$$', display:true  },
+    { left:'$',  right:'$',  display:false },
+    { left:'\\[', right:'\\]', display:true  },
+    { left:'\\(', right:'\\)', display:false },
+];
+const renderMath = (el) => {
+    if (!el) return;
+    if (window.renderMathInElement) {
+        renderMathInElement(el, { delimiters: DELIMITERS, throwOnError: false });
+    } else {
+        setTimeout(() => renderMath(el), 60);
+    }
+};
+
+// ── Share ─────────────────────────────────────────────────────
+const shareProb = () => {
+    if (current && navigator.clipboard) navigator.clipboard.writeText(current.title + ' — QuantDeck');
+};
+
+// ── Keyboard shortcuts ────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+    if (!current) {
+        if (e.key === '/') { e.preventDefault(); document.getElementById('f-search').focus(); }
+        return;
+    }
+    if (e.key === 'ArrowLeft'  || e.key === 'h') navigate(-1);
+    if (e.key === 'ArrowRight' || e.key === 'l') navigate(1);
+    if (e.key === 'Escape') {
+        const pop = document.getElementById('focus-pop');
+        if (pop && pop.classList.contains('open')) { pop.classList.remove('open'); return; }
+        if (document.getElementById('notes-side').classList.contains('open')) { toggleNotesPane(); return; }
+        showList();
+    }
+    if (e.key === 'Tab') { e.preventDefault(); switchTab(curTab === 'problem' ? 'solution' : 'problem'); }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); toggleNotesPane(); }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFocusPop(); }
+});
+
+// ── Init ──────────────────────────────────────────────────────
+applyFilters();
+updateTodayCount();
+</script>
+</body>
+</html>

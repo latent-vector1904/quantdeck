@@ -1,0 +1,25 @@
+# Syncthing ignore — keep the share lean and secret-free
+(?d).DS_Store
+(?d)**/.DS_Store
+(?d)**/node_modules
+(?d)**/.git
+(?d)**/dist
+(?d)**/.env
+(?d)**/.env.local
+(?d)**/*.local
+(?d)**/.claude
+(?d)**/__pycache__
+(?d)**/*.pyc
+(?d)**/.venv
+(?d)**/venv
+# Generated LaTeX / build artifacts
+(?d)**/*.aux
+(?d)**/*.log
+(?d)**/*.out
+(?d)**/*.toc
+# Never sync credentials if someone creates them locally
+(?d)**/*token*
+(?d)**/*secret*
+(?d)**/credentials*
+(?d)**/*.pem
+(?d)**/id_rsa*

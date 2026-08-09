@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { font-size: 18px; @apply bg-bg text-text min-h-full; }
+  body { @apply bg-bg text-text min-h-full; }
+  body { -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  button { cursor: pointer; }
+  input, select, textarea { font-family: inherit; }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 22%) transparent;
+  }
+  .tab-nums { font-variant-numeric: tabular-nums; }
+}
+
+/* KaTeX overrides */
+.katex { font-size: 1em !important; }
+.katex-display { margin: 0.9em 0; overflow-x: auto; }
+
+/* Collapsible card body */
+.coll-body img {
+  max-width: 100%;
+  margin: 12px 0;
+  border-radius: 6px;
+  background: #fff;
+  padding: 4px;
+}
