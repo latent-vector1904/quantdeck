@@ -1,8 +1,10 @@
 /**
  * Sync layer — Upstash Redis-backed with localStorage fallback.
  *
- * Three keys are stored:  "solved" | "saved" | "notes"
- * (namespaced as quantdeck:* inside upstash.ts)
+ * Keys: "solved" | "saved" | "notes" (namespaced as quantdeck:* in upstash.ts)
+ *
+ * Sets/notes use last-write-wins with updatedAt so unsaving/unsolving sticks.
+ * Legacy plain arrays / note objects are still accepted on read.
  */
 
 import { isUpstashEnabled, upstashGet, upstashSet } from './upstash'
@@ -12,6 +14,15 @@ const LS = {
   saved:  'qp_saved_v1',
   notes:  'qp_notes_v1',
 }
+
+const TS = {
+  solved: 'qp_solved_v4_ts',
+  saved:  'qp_saved_v1_ts',
+  notes:  'qp_notes_v1_ts',
+}
+
+type VersionedSet = { ids: string[]; updatedAt: number }
+type VersionedNotes = { notes: Record<string, string>; updatedAt: number }
 
 // ── localStorage helpers ──────────────────────────────────────
 export function lsGetSet(key: string): Set<string> {
@@ -27,6 +38,59 @@ export function lsSaveObj(key: string, o: Record<string, string>) {
   localStorage.setItem(key, JSON.stringify(o))
 }
 
+function lsGetTs(key: string): number {
+  const n = Number(localStorage.getItem(key) || 0)
+  return Number.isFinite(n) ? n : 0
+}
+function lsSetTs(key: string, ts: number) {
+  localStorage.setItem(key, String(ts))
+}
+
+function parseVersionedSet(raw: unknown): VersionedSet {
+  if (Array.isArray(raw)) {
+    return { ids: raw.filter((x): x is string => typeof x === 'string'), updatedAt: 0 }
+  }
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const obj = raw as { ids?: unknown; updatedAt?: unknown }
+    const ids = Array.isArray(obj.ids) ? obj.ids.filter((x): x is string => typeof x === 'string') : []
+    const updatedAt = typeof obj.updatedAt === 'number' ? obj.updatedAt : 0
+    return { ids, updatedAt }
+  }
+  return { ids: [], updatedAt: 0 }
+}
+
+function parseVersionedNotes(raw: unknown): VersionedNotes {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const obj = raw as { notes?: unknown; updatedAt?: unknown }
+    if (obj.notes && typeof obj.notes === 'object' && !Array.isArray(obj.notes)) {
+      return {
+        notes: obj.notes as Record<string, string>,
+        updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : 0,
+      }
+    }
+    // Legacy: bare notes object
+    const notes: Record<string, string> = {}
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === 'updatedAt' || k === 'notes') continue
+      if (typeof v === 'string') notes[k] = v
+    }
+    return { notes, updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : 0 }
+  }
+  return { notes: {}, updatedAt: 0 }
+}
+
+function sameIds(a: Set<string>, b: string[]): boolean {
+  if (a.size !== b.length) return false
+  return b.every(id => a.has(id))
+}
+
+function sameNotes(a: Record<string, string>, b: Record<string, string>): boolean {
+  const ak = Object.keys(a)
+  const bk = Object.keys(b)
+  if (ak.length !== bk.length) return false
+  return ak.every(k => a[k] === b[k])
+}
+
 async function pushRemote(key: string, value: unknown) {
   if (!isUpstashEnabled()) return
   try {
@@ -36,21 +100,106 @@ async function pushRemote(key: string, value: unknown) {
   }
 }
 
-// ── Push local data up ────────────────────────────────────────
-export async function pushSolved(solved: Set<string>) {
-  lsSaveSet(LS.solved, solved)
-  await pushRemote('solved', [...solved])
-}
-export async function pushSaved(saved: Set<string>) {
-  lsSaveSet(LS.saved, saved)
-  await pushRemote('saved', [...saved])
-}
-export async function pushNotes(notes: Record<string, string>) {
-  lsSaveObj(LS.notes, notes)
-  await pushRemote('notes', notes)
+function resolveSet(
+  local: Set<string>,
+  localTs: number,
+  remote: VersionedSet,
+  lsKey: string,
+  tsKey: string,
+  remoteKey: string,
+): { value: Set<string>; changed: boolean; push?: Promise<void> } {
+  if (remote.updatedAt > localTs) {
+    const next = new Set(remote.ids)
+    lsSaveSet(lsKey, next)
+    lsSetTs(tsKey, remote.updatedAt)
+    return { value: next, changed: !sameIds(local, remote.ids) }
+  }
+
+  if (localTs > remote.updatedAt) {
+    const updatedAt = localTs
+    return {
+      value: local,
+      changed: false,
+      push: upstashSet(remoteKey, { ids: [...local], updatedAt }),
+    }
+  }
+
+  // Both same generation (incl. legacy 0): one-time union, then stamp so deletes work afterward
+  if (!sameIds(local, remote.ids)) {
+    const merged = new Set(local)
+    remote.ids.forEach(id => merged.add(id))
+    const updatedAt = Date.now()
+    lsSaveSet(lsKey, merged)
+    lsSetTs(tsKey, updatedAt)
+    return {
+      value: merged,
+      changed: !sameIds(local, [...merged]),
+      push: upstashSet(remoteKey, { ids: [...merged], updatedAt }),
+    }
+  }
+
+  return { value: local, changed: false }
 }
 
-// ── Pull all remote data and merge with local ─────────────────
+function resolveNotes(
+  local: Record<string, string>,
+  localTs: number,
+  remote: VersionedNotes,
+): { value: Record<string, string>; changed: boolean; push?: Promise<void> } {
+  if (remote.updatedAt > localTs) {
+    lsSaveObj(LS.notes, remote.notes)
+    lsSetTs(TS.notes, remote.updatedAt)
+    return { value: remote.notes, changed: !sameNotes(local, remote.notes) }
+  }
+
+  if (localTs > remote.updatedAt) {
+    return {
+      value: local,
+      changed: false,
+      push: upstashSet('notes', { notes: local, updatedAt: localTs }),
+    }
+  }
+
+  if (!sameNotes(local, remote.notes)) {
+    const merged = { ...remote.notes, ...local }
+    // Prefer longer text on conflict during one-time legacy merge
+    for (const [id, note] of Object.entries(remote.notes)) {
+      if (!merged[id] || note.length > merged[id].length) merged[id] = note
+    }
+    const updatedAt = Date.now()
+    lsSaveObj(LS.notes, merged)
+    lsSetTs(TS.notes, updatedAt)
+    return {
+      value: merged,
+      changed: !sameNotes(local, merged),
+      push: upstashSet('notes', { notes: merged, updatedAt }),
+    }
+  }
+
+  return { value: local, changed: false }
+}
+
+// ── Push local data up ────────────────────────────────────────
+export async function pushSolved(solved: Set<string>) {
+  const updatedAt = Date.now()
+  lsSaveSet(LS.solved, solved)
+  lsSetTs(TS.solved, updatedAt)
+  await pushRemote('solved', { ids: [...solved], updatedAt })
+}
+export async function pushSaved(saved: Set<string>) {
+  const updatedAt = Date.now()
+  lsSaveSet(LS.saved, saved)
+  lsSetTs(TS.saved, updatedAt)
+  await pushRemote('saved', { ids: [...saved], updatedAt })
+}
+export async function pushNotes(notes: Record<string, string>) {
+  const updatedAt = Date.now()
+  lsSaveObj(LS.notes, notes)
+  lsSetTs(TS.notes, updatedAt)
+  await pushRemote('notes', { notes, updatedAt })
+}
+
+// ── Pull remote and last-write-wins merge ─────────────────────
 export async function pullAndMerge(): Promise<{
   solved: Set<string>
   saved: Set<string>
@@ -71,46 +220,17 @@ export async function pullAndMerge(): Promise<{
     upstashGet('notes'),
   ])
 
-  const remoteSolved = Array.isArray(remoteSolvedRaw) ? remoteSolvedRaw as string[] : []
-  const remoteSaved  = Array.isArray(remoteSavedRaw)  ? remoteSavedRaw  as string[] : []
-  const remoteNotes  = (remoteNotesRaw && typeof remoteNotesRaw === 'object' && !Array.isArray(remoteNotesRaw))
-    ? remoteNotesRaw as Record<string, string>
-    : {}
+  const solvedRes = resolveSet(localSolved, lsGetTs(TS.solved), parseVersionedSet(remoteSolvedRaw), LS.solved, TS.solved, 'solved')
+  const savedRes  = resolveSet(localSaved,  lsGetTs(TS.saved),  parseVersionedSet(remoteSavedRaw),  LS.saved,  TS.saved,  'saved')
+  const notesRes  = resolveNotes(localNotes, lsGetTs(TS.notes), parseVersionedNotes(remoteNotesRaw))
 
-  // Union merge for sets
-  let changed = false
-  const mergedSolved = new Set(localSolved)
-  remoteSolved.forEach(id => { if (!mergedSolved.has(id)) { mergedSolved.add(id); changed = true } })
+  const pushes = [solvedRes.push, savedRes.push, notesRes.push].filter(Boolean) as Promise<void>[]
+  if (pushes.length) await Promise.all(pushes)
 
-  const mergedSaved = new Set(localSaved)
-  remoteSaved.forEach(id => { if (!mergedSaved.has(id)) { mergedSaved.add(id); changed = true } })
-
-  // Notes: longer note wins
-  const mergedNotes = { ...localNotes }
-  for (const [id, note] of Object.entries(remoteNotes)) {
-    if (!mergedNotes[id] || note.length > mergedNotes[id].length) {
-      mergedNotes[id] = note
-      changed = true
-    }
+  return {
+    solved: solvedRes.value,
+    saved: savedRes.value,
+    notes: notesRes.value,
+    changed: solvedRes.changed || savedRes.changed || notesRes.changed,
   }
-
-  // Save merged back locally
-  lsSaveSet(LS.solved, mergedSolved)
-  lsSaveSet(LS.saved,  mergedSaved)
-  lsSaveObj(LS.notes,  mergedNotes)
-
-  // Push merged set back if local had extra items
-  const needsPushSolved = [...mergedSolved].some(id => !remoteSolved.includes(id))
-  const needsPushSaved  = [...mergedSaved].some(id  => !remoteSaved.includes(id))
-  const needsPushNotes  = Object.keys(mergedNotes).some(id =>
-    !remoteNotes[id] || mergedNotes[id] !== remoteNotes[id]
-  )
-
-  await Promise.all([
-    needsPushSolved ? upstashSet('solved', [...mergedSolved]) : Promise.resolve(),
-    needsPushSaved  ? upstashSet('saved',  [...mergedSaved])  : Promise.resolve(),
-    needsPushNotes  ? upstashSet('notes',  mergedNotes)       : Promise.resolve(),
-  ])
-
-  return { solved: mergedSolved, saved: mergedSaved, notes: mergedNotes, changed }
 }
