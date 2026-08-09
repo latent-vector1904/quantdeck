@@ -2,7 +2,7 @@
 
 Interview prep pack: **~833 quant problems** + tools to browse / rebuild / print them.
 
-**No secrets included.** Your progress stays on your machine (browser localStorage). Optional cloud sync uses *your* Supabase keys only — never put them in this folder if you share it further.
+**No secrets included.** Your progress stays on your machine (browser localStorage). Optional cloud sync uses *your* Upstash Redis REST credentials only — never put them in this folder if you share it further.
 
 ## Quick start
 

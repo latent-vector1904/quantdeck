@@ -35,8 +35,8 @@ jobs:
       - name: Build
         working-directory: ./quantdeck
         env:
-          VITE_KVDB_BUCKET_ID: ${{ secrets.VITE_KVDB_BUCKET_ID }}
-          VITE_KVDB_WRITE_KEY: ${{ secrets.VITE_KVDB_WRITE_KEY }}
+          VITE_UPSTASH_REST_URL: ${{ secrets.VITE_UPSTASH_REST_URL }}
+          VITE_UPSTASH_REST_TOKEN: ${{ secrets.VITE_UPSTASH_REST_TOKEN }}
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v4

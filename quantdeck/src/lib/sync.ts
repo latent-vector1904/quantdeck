@@ -1,10 +1,11 @@
 /**
- * Sync layer — KVDB-backed with localStorage fallback.
+ * Sync layer — Upstash Redis-backed with localStorage fallback.
  *
  * Three keys are stored:  "solved" | "saved" | "notes"
+ * (namespaced as quantdeck:* inside upstash.ts)
  */
 
-import { isKvdbEnabled, kvGet, kvSet } from './kvdb'
+import { isUpstashEnabled, upstashGet, upstashSet } from './upstash'
 
 const LS = {
   solved: 'qp_solved_v4',
@@ -26,18 +27,27 @@ export function lsSaveObj(key: string, o: Record<string, string>) {
   localStorage.setItem(key, JSON.stringify(o))
 }
 
+async function pushRemote(key: string, value: unknown) {
+  if (!isUpstashEnabled()) return
+  try {
+    await upstashSet(key, value)
+  } catch (err) {
+    console.warn(`[sync] push ${key} failed:`, err)
+  }
+}
+
 // ── Push local data up ────────────────────────────────────────
 export async function pushSolved(solved: Set<string>) {
   lsSaveSet(LS.solved, solved)
-  await kvSet('solved', [...solved])
+  await pushRemote('solved', [...solved])
 }
 export async function pushSaved(saved: Set<string>) {
   lsSaveSet(LS.saved, saved)
-  await kvSet('saved', [...saved])
+  await pushRemote('saved', [...saved])
 }
 export async function pushNotes(notes: Record<string, string>) {
   lsSaveObj(LS.notes, notes)
-  await kvSet('notes', notes)
+  await pushRemote('notes', notes)
 }
 
 // ── Pull all remote data and merge with local ─────────────────
@@ -51,60 +61,56 @@ export async function pullAndMerge(): Promise<{
   const localSaved  = lsGetSet(LS.saved)
   const localNotes  = lsGetObj(LS.notes)
 
-  if (!isKvdbEnabled) {
+  if (!isUpstashEnabled()) {
     return { solved: localSolved, saved: localSaved, notes: localNotes, changed: false }
   }
 
-  try {
-    const [remoteSolvedRaw, remoteSavedRaw, remoteNotesRaw] = await Promise.all([
-      kvGet('solved'),
-      kvGet('saved'),
-      kvGet('notes'),
-    ])
+  const [remoteSolvedRaw, remoteSavedRaw, remoteNotesRaw] = await Promise.all([
+    upstashGet('solved'),
+    upstashGet('saved'),
+    upstashGet('notes'),
+  ])
 
-    const remoteSolved = Array.isArray(remoteSolvedRaw) ? remoteSolvedRaw as string[] : []
-    const remoteSaved  = Array.isArray(remoteSavedRaw)  ? remoteSavedRaw  as string[] : []
-    const remoteNotes  = (remoteNotesRaw && typeof remoteNotesRaw === 'object' && !Array.isArray(remoteNotesRaw))
-      ? remoteNotesRaw as Record<string, string>
-      : {}
+  const remoteSolved = Array.isArray(remoteSolvedRaw) ? remoteSolvedRaw as string[] : []
+  const remoteSaved  = Array.isArray(remoteSavedRaw)  ? remoteSavedRaw  as string[] : []
+  const remoteNotes  = (remoteNotesRaw && typeof remoteNotesRaw === 'object' && !Array.isArray(remoteNotesRaw))
+    ? remoteNotesRaw as Record<string, string>
+    : {}
 
-    // Union merge for sets
-    let changed = false
-    const mergedSolved = new Set(localSolved)
-    remoteSolved.forEach(id => { if (!mergedSolved.has(id)) { mergedSolved.add(id); changed = true } })
+  // Union merge for sets
+  let changed = false
+  const mergedSolved = new Set(localSolved)
+  remoteSolved.forEach(id => { if (!mergedSolved.has(id)) { mergedSolved.add(id); changed = true } })
 
-    const mergedSaved = new Set(localSaved)
-    remoteSaved.forEach(id => { if (!mergedSaved.has(id)) { mergedSaved.add(id); changed = true } })
+  const mergedSaved = new Set(localSaved)
+  remoteSaved.forEach(id => { if (!mergedSaved.has(id)) { mergedSaved.add(id); changed = true } })
 
-    // Notes: longer note wins
-    const mergedNotes = { ...localNotes }
-    for (const [id, note] of Object.entries(remoteNotes)) {
-      if (!mergedNotes[id] || note.length > mergedNotes[id].length) {
-        mergedNotes[id] = note
-        changed = true
-      }
+  // Notes: longer note wins
+  const mergedNotes = { ...localNotes }
+  for (const [id, note] of Object.entries(remoteNotes)) {
+    if (!mergedNotes[id] || note.length > mergedNotes[id].length) {
+      mergedNotes[id] = note
+      changed = true
     }
-
-    // Save merged back locally
-    lsSaveSet(LS.solved, mergedSolved)
-    lsSaveSet(LS.saved,  mergedSaved)
-    lsSaveObj(LS.notes,  mergedNotes)
-
-    // Push merged set back if local had extra items
-    const needsPushSolved = [...mergedSolved].some(id => !remoteSolved.includes(id))
-    const needsPushSaved  = [...mergedSaved].some(id  => !remoteSaved.includes(id))
-    const needsPushNotes  = Object.keys(mergedNotes).some(id =>
-      !remoteNotes[id] || mergedNotes[id] !== remoteNotes[id]
-    )
-
-    await Promise.all([
-      needsPushSolved ? kvSet('solved', [...mergedSolved]) : Promise.resolve(),
-      needsPushSaved  ? kvSet('saved',  [...mergedSaved])  : Promise.resolve(),
-      needsPushNotes  ? kvSet('notes',  mergedNotes)       : Promise.resolve(),
-    ])
-
-    return { solved: mergedSolved, saved: mergedSaved, notes: mergedNotes, changed }
-  } catch {
-    return { solved: localSolved, saved: localSaved, notes: localNotes, changed: false }
   }
+
+  // Save merged back locally
+  lsSaveSet(LS.solved, mergedSolved)
+  lsSaveSet(LS.saved,  mergedSaved)
+  lsSaveObj(LS.notes,  mergedNotes)
+
+  // Push merged set back if local had extra items
+  const needsPushSolved = [...mergedSolved].some(id => !remoteSolved.includes(id))
+  const needsPushSaved  = [...mergedSaved].some(id  => !remoteSaved.includes(id))
+  const needsPushNotes  = Object.keys(mergedNotes).some(id =>
+    !remoteNotes[id] || mergedNotes[id] !== remoteNotes[id]
+  )
+
+  await Promise.all([
+    needsPushSolved ? upstashSet('solved', [...mergedSolved]) : Promise.resolve(),
+    needsPushSaved  ? upstashSet('saved',  [...mergedSaved])  : Promise.resolve(),
+    needsPushNotes  ? upstashSet('notes',  mergedNotes)       : Promise.resolve(),
+  ])
+
+  return { solved: mergedSolved, saved: mergedSaved, notes: mergedNotes, changed }
 }

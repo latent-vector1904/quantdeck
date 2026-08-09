@@ -1,6 +1,6 @@
 # Agent brief — set up QuantDeck for someone else
 
-You are setting up **QuantDeck** (quant interview problem browser) on a recipient’s machine from this Syncthing share. The share is intentionally **secret-free**: no auth tokens, no personal cloud sync IDs, no Supabase keys, no personal progress.
+You are setting up **QuantDeck** (quant interview problem browser) on a recipient’s machine from this Syncthing share. The share is intentionally **secret-free**: no auth tokens, no personal cloud sync IDs, no Upstash keys, no personal progress.
 
 ## What this folder is
 
@@ -16,9 +16,9 @@ You are setting up **QuantDeck** (quant interview problem browser) on a recipien
 
 ## Hard rules (do not violate)
 
-1. **Never** paste or commit Firebase / Supabase / other cloud credentials into this shared folder.
+1. **Never** paste or commit Firebase / Upstash / other cloud credentials into this shared folder.
 2. **Never** copy the recipient’s `.env` or tokens back into Syncthing.
-3. **Never** reuse the sender’s cloud sync project — if they want sync, create **their own** Supabase (or skip sync; localStorage works).
+3. **Never** reuse the sender’s cloud sync project — if they want sync, create **their own** Upstash Redis DB (or skip sync; localStorage works).
 4. If you scrape again, put the token in an env var outside the share:
    ```bash
    export QUANTPROF_ID_TOKEN='…fresh token…'
@@ -54,22 +54,18 @@ cd quantdeck
 npm install
 cp .env.example .env
 # Leave .env empty placeholders → localStorage-only mode works.
-# OR create THEIR OWN Supabase project and fill:
-#   VITE_SUPABASE_URL=...
-#   VITE_SUPABASE_ANON_KEY=...
+# OR create THEIR OWN Upstash Redis DB and fill:
+#   VITE_UPSTASH_REST_URL=https://….upstash.io
+#   VITE_UPSTASH_REST_TOKEN=…
+# (credentials can also be pasted in the app Settings UI)
 npm run dev
 ```
 
-Supabase one-time SQL (their project):
+Upstash one-time setup (their console):
 
-```sql
-create table if not exists qd_sync (
-  key        text primary key,
-  value      jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
-alter table qd_sync disable row level security;
-```
+1. Create a free Redis DB at https://console.upstash.com
+2. Copy REST URL + Token into `.env` (or Settings)
+3. App stores `quantdeck:solved`, `quantdeck:saved`, `quantdeck:notes`
 
 Problems are in `quantdeck/public/problems.json` (also mirrored under `questions/problems.json`).
 
@@ -163,7 +159,7 @@ On the **sender** (already done if they gave you this folder):
 - [ ] `.stignore` present (keeps `node_modules`, `.env`, secrets out)
 - [ ] Confirm no JWTs or personal sync IDs remain:
   ```bash
-  rg -n 'eyJhbGci|SUPABASE_ANON_KEY=[^y]|Bearer ey' .
+  rg -n 'eyJhbGci|UPSTASH_REST_TOKEN=[^y]|Bearer ey' .
   ```
 
 On the **recipient**:
@@ -171,14 +167,14 @@ On the **recipient**:
 - [ ] Install Syncthing, accept the share, wait for full sync
 - [ ] Prefer Option “standalone HTML” first to verify questions load
 - [ ] If using React: `npm install` locally (ignored by Syncthing)
-- [ ] Create **their own** Supabase (or skip cloud sync)
+- [ ] Create **their own** Upstash Redis DB (or skip cloud sync)
 - [ ] Do not put `.env` inside the synced folder if they want it private — or rely on `.stignore` excluding `.env`
 
 ## What was deliberately excluded from this share
 
 - Firebase ID tokens / account JWTs
 - Personal cloud sync bucket/project IDs and progress
-- Supabase project credentials
+- Upstash / Redis REST credentials
 - `.claude/` local settings, personal emails/paths
 - `node_modules/`, `.git/`, deploy repos with live personal sync URLs
 - Generated workbook PDF/TeX logs (rebuildable)
@@ -198,4 +194,4 @@ If anything is missing after sync, copy from `toolkit/1_scraper/` (same files ar
 - Recipient can open problems (standalone or `npm run dev`)
 - Recipient (or you) can scrape new questions via the checklist above and run `scripts/refresh_questions.py`
 - No shared credentials / JWTs exist in the folder
-- Optional: their own Supabase sync works with **their** `.env` (not synced)
+- Optional: their own Upstash sync works with **their** `.env` (not synced)

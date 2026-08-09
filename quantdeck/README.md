@@ -9,35 +9,36 @@ Quantitative finance interview prep — 833 problems across probability, statist
 - **Per-question notes** — split-pane sidebar, auto-saved, synced
 - **Focus Mode** — timed hint/solution unlocking (10 min → Hint 1, +5 min each)
 - **Answer checker** — for problems with numeric/short answers
-- **Cross-device sync** — solved, saved, and notes all sync via Supabase
+- **Cross-device sync** — solved, saved, and notes sync via Upstash Redis
 
 ## Setup
 
 ```bash
 npm install
 cp .env.example .env
-# Fill in your Supabase credentials (see below)
+# Fill in Upstash REST URL + token (see below), or leave blank and paste them in Settings
 npm run dev
 ```
 
-## Supabase (one-time)
+## Upstash sync (one-time)
 
-1. Create a free project at [supabase.com](https://supabase.com)
-2. In the **SQL editor**, run:
-```sql
-create table if not exists qd_sync (
-  key        text primary key,
-  value      jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
-alter table qd_sync disable row level security;
-```
-3. Go to **Settings → API**, copy:
-   - `Project URL` → `VITE_SUPABASE_URL`
-   - `anon public` key → `VITE_SUPABASE_ANON_KEY`
-4. Paste into `.env`
+1. Create a free Redis database at [console.upstash.com](https://console.upstash.com)
+2. Open the DB → **REST API** → copy:
+   - `UPSTASH_REDIS_REST_URL` → `VITE_UPSTASH_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN` → `VITE_UPSTASH_REST_TOKEN`
+3. Paste into `.env` (gitignored) **or** enter them in the app **Settings** gear
 
-For GitHub Actions, add both as **repository secrets** (`Settings → Secrets → Actions`).
+Keys stored remotely (namespaced):
+
+| Key | Contents |
+|---|---|
+| `quantdeck:solved` | JSON array of solved problem IDs |
+| `quantdeck:saved` | JSON array of saved problem IDs |
+| `quantdeck:notes` | JSON object of `{ problemId: noteText }` |
+
+Local progress always lives in `localStorage`. On load (and every 5s online), the app union-merges local + remote and writes back.
+
+For GitHub Actions / Pages, add both as **repository secrets** (`Settings → Secrets → Actions`).
 
 ## Update problems
 

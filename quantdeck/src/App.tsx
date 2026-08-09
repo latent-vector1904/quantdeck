@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useStore } from './store/useStore'
 import { loadProblems } from './lib/problems'
 import { pullAndMerge } from './lib/sync'
-import { isKvdbEnabled } from './lib/kvdb'
+import { isUpstashEnabled } from './lib/upstash'
 import Navbar       from './components/Navbar'
 import OfflineBanner from './components/OfflineBanner'
 import ListView      from './components/ListView'
@@ -25,7 +25,7 @@ export default function App() {
 
   // Sync on mount + when coming back online
   useEffect(() => {
-    if (!isKvdbEnabled) return
+    if (!online || !isUpstashEnabled()) return
     setSyncStatus('syncing')
     pullAndMerge()
       .then(({ solved, saved, notes }) => {
@@ -39,10 +39,11 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online])
 
-  // Real-time sync — poll every 5 s when KVDB is enabled
+  // Poll every 5s for cross-device updates
   useEffect(() => {
-    if (!isKvdbEnabled) return
+    if (!isUpstashEnabled()) return
     const id = setInterval(() => {
+      if (!navigator.onLine) return
       pullAndMerge().then(({ solved, saved, notes, changed }) => {
         if (changed) { setSolved(solved); setSaved(saved); setNotes(notes) }
       }).catch((err: Error) => {

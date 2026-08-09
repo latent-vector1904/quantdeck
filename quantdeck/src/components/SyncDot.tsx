@@ -1,9 +1,9 @@
 import { useStore } from '../store/useStore'
-import { isKvdbEnabled } from '../lib/kvdb'
+import { isUpstashEnabled } from '../lib/upstash'
 
 export default function SyncDot() {
   const status = useStore(s => s.syncStatus)
-  if (!isKvdbEnabled) return null
+  if (!isUpstashEnabled()) return null
 
   if (status === 'idle') return null
 
