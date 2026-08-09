@@ -77,10 +77,10 @@ export default function SettingsModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={toggleSettings}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={toggleSettings}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
       <div
-        className="relative bg-bg-card border border-border rounded-2xl w-full max-w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl scrollbar-thin"
+        className="relative bg-bg-card border border-border sm:rounded-2xl rounded-t-2xl w-full max-w-[520px] max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto shadow-2xl scrollbar-thin pb-[env(safe-area-inset-bottom)]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

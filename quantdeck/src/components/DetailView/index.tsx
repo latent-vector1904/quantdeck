@@ -64,25 +64,25 @@ export default function DetailView() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-[calc(100dvh-52px)] sm:min-h-[calc(100dvh-60px)]">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-11 py-4 border-b border-border flex-wrap gap-y-2.5">
-        <button onClick={closeProblem} className="px-4 py-2 bg-bg-card border border-border rounded-lg text-sm font-medium text-text hover:bg-bg-muted transition-colors">
+      <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 md:px-11 py-3 sm:py-4 border-b border-border flex-wrap gap-y-2">
+        <button onClick={closeProblem} className="px-3.5 sm:px-4 py-2.5 sm:py-2 bg-bg-card border border-border rounded-lg text-sm font-medium text-text hover:bg-bg-muted transition-colors touch-manipulation">
           ← Back
         </button>
         {isSolved && (
           <span className="flex items-center gap-1.5 text-sm font-medium text-accent-dim">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4"><path d="M20 6L9 17l-5-5"/></svg>
-            Solved
+            <span className="max-sm:hidden">Solved</span>
           </span>
         )}
-        <div className="ml-auto flex items-center gap-1">
-          <button onClick={() => navigate(-1)} disabled={idx <= 0} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-dim hover:text-text hover:bg-bg-card disabled:opacity-30 disabled:pointer-events-none transition-all">
+        <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
+          <button onClick={() => navigate(-1)} disabled={idx <= 0} className="flex items-center gap-1 px-2.5 sm:px-3 py-2.5 sm:py-2 rounded-lg text-sm text-text-dim hover:text-text hover:bg-bg-card disabled:opacity-30 disabled:pointer-events-none transition-all touch-manipulation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
-            Prev
+            <span className="max-sm:hidden">Prev</span>
           </button>
-          <button onClick={() => navigate(1)} disabled={idx >= filtered.length - 1} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-text-dim hover:text-text hover:bg-bg-card disabled:opacity-30 disabled:pointer-events-none transition-all">
-            Next
+          <button onClick={() => navigate(1)} disabled={idx >= filtered.length - 1} className="flex items-center gap-1 px-2.5 sm:px-3 py-2.5 sm:py-2 rounded-lg text-sm text-text-dim hover:text-text hover:bg-bg-card disabled:opacity-30 disabled:pointer-events-none transition-all touch-manipulation">
+            <span className="max-sm:hidden">Next</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
@@ -90,21 +90,21 @@ export default function DetailView() {
 
       {/* Shell (content + notes sidebar) */}
       <div className="flex flex-1 items-start">
-        <div className="flex-1 min-w-0 max-w-[860px] mx-auto px-11 py-8 pb-24 w-full">
+        <div className="flex-1 min-w-0 max-w-[860px] mx-auto px-4 sm:px-6 md:px-11 py-5 sm:py-8 pb-28 w-full">
           {/* Tab row */}
-          <div className="flex items-center gap-4 mb-7 flex-wrap gap-y-3">
+          <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-7 flex-wrap gap-y-3">
             {/* Tabs */}
             <div className="flex bg-bg-card border border-border rounded-[9px] p-[3px] gap-0.5">
               {(['problem','solution'] as const).map(tab => (
                 <button key={tab} onClick={() => setCurTab(tab)}
-                  className={`px-[18px] py-[7px] rounded-[6px] text-sm font-medium capitalize transition-all ${curTab === tab ? 'bg-bg-muted text-text' : 'text-text-dim hover:text-text'}`}
+                  className={`px-3.5 sm:px-[18px] py-2 sm:py-[7px] rounded-[6px] text-sm font-medium capitalize transition-all touch-manipulation ${curTab === tab ? 'bg-bg-muted text-text' : 'text-text-dim hover:text-text'}`}
                 >{tab}</button>
               ))}
             </div>
 
             {/* Right actions */}
-            <div className="ml-auto flex items-center gap-2.5 flex-wrap">
-              <span className="px-3.5 py-1.5 bg-[hsl(213_94%_62%_/_0.12)] border border-[hsl(213_94%_62%_/_0.25)] rounded-full text-[13px] font-semibold text-accent-dim">
+            <div className="ml-auto flex items-center gap-2 sm:gap-2.5 flex-wrap">
+              <span className="px-2.5 sm:px-3.5 py-1.5 bg-[hsl(213_94%_62%_/_0.12)] border border-[hsl(213_94%_62%_/_0.25)] rounded-full text-[12px] sm:text-[13px] font-semibold text-accent-dim">
                 Lvl {p.level || '?'}/10
               </span>
 
@@ -113,7 +113,7 @@ export default function DetailView() {
                 <button
                   onClick={() => setFocusPopOpen(v => !v)}
                   title="Focus mode (F)"
-                  className={`relative w-9 h-9 rounded-lg border flex items-center justify-center transition-all ${
+                  className={`relative w-10 h-10 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all touch-manipulation ${
                     fm.running ? 'border-accent/35 bg-accent/6 text-accent'
                     : fm.paused ? 'border-amber/35 bg-amber/6 text-amber'
                     : 'border-border text-text-faint hover:text-text-dim hover:border-bg-accent'
@@ -141,7 +141,7 @@ export default function DetailView() {
               <button
                 onClick={() => setNotesOpen(!notesOpen)}
                 title="Notes (N)"
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all ${
+                className={`w-10 h-10 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all touch-manipulation ${
                   notesOpen ? 'border-accent/35 bg-accent/6 text-accent' : 'border-border text-text-faint hover:text-text-dim hover:border-bg-accent'
                 }`}
               >
@@ -157,7 +157,7 @@ export default function DetailView() {
               <button
                 onClick={() => toggleSaved(p._id)}
                 title="Save for later"
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-all ${
+                className={`w-10 h-10 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center transition-all touch-manipulation ${
                   isSaved ? 'border-amber/30 text-amber' : 'border-border text-text-faint hover:text-text-dim hover:border-bg-accent'
                 }`}
               >
@@ -170,7 +170,7 @@ export default function DetailView() {
               <button
                 onClick={() => navigator.clipboard?.writeText(p.title + ' — QuantDeck')}
                 title="Copy title"
-                className="w-9 h-9 rounded-lg border border-border text-text-faint hover:text-text-dim hover:border-bg-accent flex items-center justify-center transition-all"
+                className="hidden sm:flex w-9 h-9 rounded-lg border border-border text-text-faint hover:text-text-dim hover:border-bg-accent items-center justify-center transition-all"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
@@ -181,31 +181,32 @@ export default function DetailView() {
           </div>
 
           {/* Title */}
-          <h1 className="text-[32px] font-bold tracking-tight leading-tight text-text mb-6">{p.title}</h1>
+          <h1 className="text-[22px] sm:text-[28px] md:text-[32px] font-bold tracking-tight leading-tight text-text mb-4 sm:mb-6">{p.title}</h1>
 
           {/* Problem pane */}
           {curTab === 'problem' && (
             <div>
               <div
                 ref={probRef}
-                className="text-[19px] leading-[1.85] text-text-dim space-y-3"
+                className="text-[16px] sm:text-[19px] leading-[1.75] sm:leading-[1.85] text-text-dim space-y-3 overflow-x-auto"
                 dangerouslySetInnerHTML={{ __html: rich(p.question) }}
               />
               {/* Answer */}
               {p.answer != null && String(p.answer).trim() !== '' && (
-                <div className="mt-8 pt-7 border-t border-border">
-                  <div className="flex gap-3 items-stretch">
+                <div className="mt-6 sm:mt-8 pt-5 sm:pt-7 border-t border-border">
+                  <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch">
                     <input
                       type="text"
                       value={answerInput}
                       onChange={e => { setAnswerInput(e.target.value); setFeedback(null) }}
                       onKeyDown={e => e.key === 'Enter' && checkAnswer()}
                       placeholder="Place answer here"
-                      className="flex-1 bg-bg-card border border-border rounded-xl px-4 py-3.5 text-[15px] text-text placeholder-text-faint focus:outline-none focus:border-accent transition-colors"
+                      enterKeyHint="done"
+                      className="flex-1 bg-bg-card border border-border rounded-xl px-4 py-3.5 text-[16px] sm:text-[15px] text-text placeholder-text-faint focus:outline-none focus:border-accent transition-colors"
                     />
                     <button
                       onClick={checkAnswer}
-                      className="flex items-center gap-2 px-6 bg-accent text-[hsl(220,13%,8%)] rounded-xl text-sm font-bold flex-shrink-0 hover:opacity-85 transition-opacity"
+                      className="flex items-center justify-center gap-2 px-6 py-3.5 bg-accent text-[hsl(220,13%,8%)] rounded-xl text-sm font-bold flex-shrink-0 hover:opacity-85 transition-opacity touch-manipulation"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                         <line x1="22" y1="2" x2="11" y2="13"/>
@@ -221,7 +222,7 @@ export default function DetailView() {
                   )}
                   <button
                     onClick={() => toggleSolved(p._id)}
-                    className={`mt-3.5 px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                    className={`mt-3.5 w-full sm:w-auto px-4 py-3 sm:py-2 text-sm font-medium rounded-lg border transition-all touch-manipulation ${
                       isSolved
                         ? 'bg-accent border-accent text-[hsl(220,13%,8%)] font-semibold'
                         : 'border-border text-text-dim hover:border-accent-dim hover:text-accent-dim'
@@ -266,12 +267,12 @@ export default function DetailView() {
         </div>
 
         {/* Notes sidebar */}
-        <aside className={`flex-shrink-0 bg-bg-card border-l border-border sticky top-[60px] self-start h-[calc(100vh-60px)] transition-[width] duration-[250ms] ease-in-out overflow-hidden ${notesOpen ? 'w-[380px] max-md:w-full max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:top-[60px] max-md:z-40' : 'w-0 border-l-transparent'}`}>
-          <div className="w-[380px] h-full flex flex-col">
-            <div className="flex items-center justify-between px-[22px] pt-[22px] pb-0 flex-shrink-0">
+        <aside className={`flex-shrink-0 bg-bg-card border-l border-border sticky top-[52px] sm:top-[60px] self-start h-[calc(100dvh-52px-env(safe-area-inset-top))] sm:h-[calc(100dvh-60px-env(safe-area-inset-top))] transition-[width] duration-[250ms] ease-in-out overflow-hidden ${notesOpen ? 'w-full max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-[52px] max-md:z-40 max-md:border-l-0 md:w-[380px]' : 'w-0 border-l-transparent'}`}>
+          <div className="w-full md:w-[380px] h-full flex flex-col pb-[env(safe-area-inset-bottom)]">
+            <div className="flex items-center justify-between px-4 sm:px-[22px] pt-4 sm:pt-[22px] pb-0 flex-shrink-0">
               <span className="text-[13px] font-semibold uppercase tracking-wider">Notes</span>
-              <button onClick={() => setNotesOpen(false)} className="w-6 h-6 rounded-md flex items-center justify-center text-text-faint hover:text-text hover:bg-bg-muted transition-all">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+              <button onClick={() => setNotesOpen(false)} className="w-9 h-9 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-text-faint hover:text-text hover:bg-bg-muted transition-all touch-manipulation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 sm:w-3.5 sm:h-3.5">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>

@@ -25,12 +25,12 @@ export default function NotesSidebar({ problemId }: { problemId: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full px-[22px] py-[22px]">
+    <div className="flex flex-col h-full px-4 sm:px-[22px] py-4 sm:py-[22px]">
       <textarea
         value={text}
         onChange={e => handleInput(e.target.value)}
         placeholder="Write your notes here…"
-        className="flex-1 w-full bg-bg border border-border rounded-xl p-4 text-[14.5px] leading-[1.7] text-text resize-none focus:outline-none focus:border-accent transition-colors placeholder-text-faint scrollbar-thin"
+        className="flex-1 w-full bg-bg border border-border rounded-xl p-4 text-[16px] sm:text-[14.5px] leading-[1.7] text-text resize-none focus:outline-none focus:border-accent transition-colors placeholder-text-faint scrollbar-thin"
       />
       <div className="flex items-center justify-between mt-2.5 text-[12px]">
         <span className={`text-accent-dim font-medium transition-opacity ${saved ? 'opacity-100' : 'opacity-0'}`}>Saved ✓</span>
