@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Problem, StatusFilter, TabId, SyncStatus } from '../types'
 import { applyFilters } from '../lib/problems'
-import { pushSolved, pushSaved, pushNotes, lsGetSet, lsGetObj } from '../lib/sync'
+import { saveLocalSolved, saveLocalSaved, saveLocalNotes, lsGetSet, lsGetObj } from '../lib/sync'
 
 const PAGE_SIZE = 20
 
@@ -101,7 +101,7 @@ export const useStore = create<Store>((set, get) => ({
     const s = new Set(get().solved)
     if (s.has(id)) s.delete(id); else s.add(id)
     set({ solved: s })
-    pushSolved(s)
+    saveLocalSolved(s)
     get()._refilter()
   },
 
@@ -109,7 +109,7 @@ export const useStore = create<Store>((set, get) => ({
     const s = new Set(get().saved)
     if (s.has(id)) s.delete(id); else s.add(id)
     set({ saved: s })
-    pushSaved(s)
+    saveLocalSaved(s)
     get()._refilter()
   },
 
@@ -117,7 +117,7 @@ export const useStore = create<Store>((set, get) => ({
     const n = { ...get().notes }
     if (text.trim()) n[id] = text; else delete n[id]
     set({ notes: n })
-    pushNotes(n)
+    saveLocalNotes(n)
   },
 
   // ── UI state ──────────────────────────────────────────────

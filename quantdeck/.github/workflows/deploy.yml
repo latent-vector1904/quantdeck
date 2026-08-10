@@ -29,9 +29,7 @@ jobs:
 
       - name: Build
         run: npm run build
-        env:
-          VITE_UPSTASH_REST_URL: ${{ secrets.VITE_UPSTASH_REST_URL }}
-          VITE_UPSTASH_REST_TOKEN: ${{ secrets.VITE_UPSTASH_REST_TOKEN }}
+        # Local-only progress on public Pages — no Upstash secrets baked in.
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,10 +1,7 @@
 /**
- * Sync layer — Upstash Redis-backed with localStorage fallback.
+ * Sync layer — localStorage first; Upstash only on manual Push / Pull.
  *
  * Keys: "solved" | "saved" | "notes" (namespaced as quantdeck:* in upstash.ts)
- *
- * Sets/notes use last-write-wins with updatedAt so unsaving/unsolving sticks.
- * Legacy plain arrays / note objects are still accepted on read.
  */
 
 import { isUpstashEnabled, upstashGet, upstashSet } from './upstash'
@@ -38,10 +35,6 @@ export function lsSaveObj(key: string, o: Record<string, string>) {
   localStorage.setItem(key, JSON.stringify(o))
 }
 
-function lsGetTs(key: string): number {
-  const n = Number(localStorage.getItem(key) || 0)
-  return Number.isFinite(n) ? n : 0
-}
 function lsSetTs(key: string, ts: number) {
   localStorage.setItem(key, String(ts))
 }
@@ -68,7 +61,6 @@ function parseVersionedNotes(raw: unknown): VersionedNotes {
         updatedAt: typeof obj.updatedAt === 'number' ? obj.updatedAt : 0,
       }
     }
-    // Legacy: bare notes object
     const notes: Record<string, string> = {}
     for (const [k, v] of Object.entries(obj)) {
       if (k === 'updatedAt' || k === 'notes') continue
@@ -79,140 +71,49 @@ function parseVersionedNotes(raw: unknown): VersionedNotes {
   return { notes: {}, updatedAt: 0 }
 }
 
-function sameIds(a: Set<string>, b: string[]): boolean {
-  if (a.size !== b.length) return false
-  return b.every(id => a.has(id))
-}
-
-function sameNotes(a: Record<string, string>, b: Record<string, string>): boolean {
-  const ak = Object.keys(a)
-  const bk = Object.keys(b)
-  if (ak.length !== bk.length) return false
-  return ak.every(k => a[k] === b[k])
-}
-
-async function pushRemote(key: string, value: unknown) {
-  if (!isUpstashEnabled()) return
-  try {
-    await upstashSet(key, value)
-  } catch (err) {
-    console.warn(`[sync] push ${key} failed:`, err)
-  }
-}
-
-function resolveSet(
-  local: Set<string>,
-  localTs: number,
-  remote: VersionedSet,
-  lsKey: string,
-  tsKey: string,
-  remoteKey: string,
-): { value: Set<string>; changed: boolean; push?: Promise<void> } {
-  if (remote.updatedAt > localTs) {
-    const next = new Set(remote.ids)
-    lsSaveSet(lsKey, next)
-    lsSetTs(tsKey, remote.updatedAt)
-    return { value: next, changed: !sameIds(local, remote.ids) }
-  }
-
-  if (localTs > remote.updatedAt) {
-    const updatedAt = localTs
-    return {
-      value: local,
-      changed: false,
-      push: upstashSet(remoteKey, { ids: [...local], updatedAt }),
-    }
-  }
-
-  // Both same generation (incl. legacy 0): one-time union, then stamp so deletes work afterward
-  if (!sameIds(local, remote.ids)) {
-    const merged = new Set(local)
-    remote.ids.forEach(id => merged.add(id))
-    const updatedAt = Date.now()
-    lsSaveSet(lsKey, merged)
-    lsSetTs(tsKey, updatedAt)
-    return {
-      value: merged,
-      changed: !sameIds(local, [...merged]),
-      push: upstashSet(remoteKey, { ids: [...merged], updatedAt }),
-    }
-  }
-
-  return { value: local, changed: false }
-}
-
-function resolveNotes(
-  local: Record<string, string>,
-  localTs: number,
-  remote: VersionedNotes,
-): { value: Record<string, string>; changed: boolean; push?: Promise<void> } {
-  if (remote.updatedAt > localTs) {
-    lsSaveObj(LS.notes, remote.notes)
-    lsSetTs(TS.notes, remote.updatedAt)
-    return { value: remote.notes, changed: !sameNotes(local, remote.notes) }
-  }
-
-  if (localTs > remote.updatedAt) {
-    return {
-      value: local,
-      changed: false,
-      push: upstashSet('notes', { notes: local, updatedAt: localTs }),
-    }
-  }
-
-  if (!sameNotes(local, remote.notes)) {
-    const merged = { ...remote.notes, ...local }
-    // Prefer longer text on conflict during one-time legacy merge
-    for (const [id, note] of Object.entries(remote.notes)) {
-      if (!merged[id] || note.length > merged[id].length) merged[id] = note
-    }
-    const updatedAt = Date.now()
-    lsSaveObj(LS.notes, merged)
-    lsSetTs(TS.notes, updatedAt)
-    return {
-      value: merged,
-      changed: !sameNotes(local, merged),
-      push: upstashSet('notes', { notes: merged, updatedAt }),
-    }
-  }
-
-  return { value: local, changed: false }
-}
-
-// ── Push local data up ────────────────────────────────────────
-export async function pushSolved(solved: Set<string>) {
-  const updatedAt = Date.now()
+// ── Local-only saves (toggles never touch the cloud) ──────────
+export function saveLocalSolved(solved: Set<string>) {
   lsSaveSet(LS.solved, solved)
-  lsSetTs(TS.solved, updatedAt)
-  await pushRemote('solved', { ids: [...solved], updatedAt })
+  lsSetTs(TS.solved, Date.now())
 }
-export async function pushSaved(saved: Set<string>) {
-  const updatedAt = Date.now()
+export function saveLocalSaved(saved: Set<string>) {
   lsSaveSet(LS.saved, saved)
-  lsSetTs(TS.saved, updatedAt)
-  await pushRemote('saved', { ids: [...saved], updatedAt })
+  lsSetTs(TS.saved, Date.now())
 }
-export async function pushNotes(notes: Record<string, string>) {
-  const updatedAt = Date.now()
+export function saveLocalNotes(notes: Record<string, string>) {
   lsSaveObj(LS.notes, notes)
-  lsSetTs(TS.notes, updatedAt)
-  await pushRemote('notes', { notes, updatedAt })
+  lsSetTs(TS.notes, Date.now())
 }
 
-// ── Pull remote and last-write-wins merge ─────────────────────
-export async function pullAndMerge(): Promise<{
+/** @deprecated use saveLocal* */
+export async function pushSolved(solved: Set<string>) { saveLocalSolved(solved) }
+export async function pushSaved(saved: Set<string>) { saveLocalSaved(saved) }
+export async function pushNotes(notes: Record<string, string>) { saveLocalNotes(notes) }
+
+/** Manual PUSH — overwrite cloud with this browser's progress. */
+export async function pushAll(): Promise<void> {
+  if (!isUpstashEnabled()) throw new Error('Cloud sync is not configured')
+  const updatedAt = Date.now()
+  const solved = lsGetSet(LS.solved)
+  const saved = lsGetSet(LS.saved)
+  const notes = lsGetObj(LS.notes)
+  lsSetTs(TS.solved, updatedAt)
+  lsSetTs(TS.saved, updatedAt)
+  lsSetTs(TS.notes, updatedAt)
+  await Promise.all([
+    upstashSet('solved', { ids: [...solved], updatedAt }),
+    upstashSet('saved', { ids: [...saved], updatedAt }),
+    upstashSet('notes', { notes, updatedAt }),
+  ])
+}
+
+/** Manual PULL — overwrite this browser with cloud progress. */
+export async function pullAll(): Promise<{
   solved: Set<string>
   saved: Set<string>
   notes: Record<string, string>
-  changed: boolean
 }> {
-  const localSolved = lsGetSet(LS.solved)
-  const localSaved  = lsGetSet(LS.saved)
-  const localNotes  = lsGetObj(LS.notes)
-
-  if (!isUpstashEnabled()) {
-    return { solved: localSolved, saved: localSaved, notes: localNotes, changed: false }
-  }
+  if (!isUpstashEnabled()) throw new Error('Cloud sync is not configured')
 
   const [remoteSolvedRaw, remoteSavedRaw, remoteNotesRaw] = await Promise.all([
     upstashGet('solved'),
@@ -220,17 +121,99 @@ export async function pullAndMerge(): Promise<{
     upstashGet('notes'),
   ])
 
-  const solvedRes = resolveSet(localSolved, lsGetTs(TS.solved), parseVersionedSet(remoteSolvedRaw), LS.solved, TS.solved, 'solved')
-  const savedRes  = resolveSet(localSaved,  lsGetTs(TS.saved),  parseVersionedSet(remoteSavedRaw),  LS.saved,  TS.saved,  'saved')
-  const notesRes  = resolveNotes(localNotes, lsGetTs(TS.notes), parseVersionedNotes(remoteNotesRaw))
+  const remoteSolved = parseVersionedSet(remoteSolvedRaw)
+  const remoteSaved = parseVersionedSet(remoteSavedRaw)
+  const remoteNotes = parseVersionedNotes(remoteNotesRaw)
 
-  const pushes = [solvedRes.push, savedRes.push, notesRes.push].filter(Boolean) as Promise<void>[]
-  if (pushes.length) await Promise.all(pushes)
+  const solved = new Set(remoteSolved.ids)
+  const saved = new Set(remoteSaved.ids)
+  const notes = remoteNotes.notes
+  const now = Date.now()
 
+  lsSaveSet(LS.solved, solved)
+  lsSaveSet(LS.saved, saved)
+  lsSaveObj(LS.notes, notes)
+  lsSetTs(TS.solved, remoteSolved.updatedAt || now)
+  lsSetTs(TS.saved, remoteSaved.updatedAt || now)
+  lsSetTs(TS.notes, remoteNotes.updatedAt || now)
+
+  return { solved, saved, notes }
+}
+
+/** Peek remote counts without changing local data. */
+export async function peekRemote(): Promise<{ solved: number; saved: number; notes: number } | null> {
+  if (!isUpstashEnabled()) return null
+  const [a, b, c] = await Promise.all([
+    upstashGet('solved'),
+    upstashGet('saved'),
+    upstashGet('notes'),
+  ])
   return {
-    solved: solvedRes.value,
-    saved: savedRes.value,
-    notes: notesRes.value,
-    changed: solvedRes.changed || savedRes.changed || notesRes.changed,
+    solved: parseVersionedSet(a).ids.length,
+    saved: parseVersionedSet(b).ids.length,
+    notes: Object.keys(parseVersionedNotes(c).notes).length,
   }
+}
+
+// ── File backup ───────────────────────────────────────────────
+export type ProgressBackup = {
+  version: 1
+  exportedAt: string
+  solved: string[]
+  saved: string[]
+  notes: Record<string, string>
+}
+
+export function exportProgress(): ProgressBackup {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    solved: [...lsGetSet(LS.solved)],
+    saved: [...lsGetSet(LS.saved)],
+    notes: lsGetObj(LS.notes),
+  }
+}
+
+export function downloadProgressBackup() {
+  const data = exportProgress()
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `quantdeck-progress-${data.exportedAt.slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export function importProgress(raw: unknown): {
+  solved: Set<string>
+  saved: Set<string>
+  notes: Record<string, string>
+} {
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid progress file')
+  const obj = raw as Partial<ProgressBackup>
+
+  const incomingSolved = Array.isArray(obj.solved) ? obj.solved.filter((x): x is string => typeof x === 'string') : []
+  const incomingSaved  = Array.isArray(obj.saved)  ? obj.saved.filter((x): x is string => typeof x === 'string') : []
+  const incomingNotes  = (obj.notes && typeof obj.notes === 'object' && !Array.isArray(obj.notes))
+    ? obj.notes as Record<string, string>
+    : {}
+
+  const solved = new Set([...lsGetSet(LS.solved), ...incomingSolved])
+  const saved  = new Set([...lsGetSet(LS.saved), ...incomingSaved])
+  const notes  = { ...lsGetObj(LS.notes) }
+  for (const [id, note] of Object.entries(incomingNotes)) {
+    if (typeof note !== 'string') continue
+    if (!notes[id] || note.length >= notes[id].length) notes[id] = note
+  }
+
+  const now = Date.now()
+  lsSaveSet(LS.solved, solved)
+  lsSaveSet(LS.saved, saved)
+  lsSaveObj(LS.notes, notes)
+  lsSetTs(TS.solved, now)
+  lsSetTs(TS.saved, now)
+  lsSetTs(TS.notes, now)
+
+  return { solved, saved, notes }
 }

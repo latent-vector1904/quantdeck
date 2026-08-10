@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
 import { useStore } from './store/useStore'
 import { loadProblems } from './lib/problems'
-import { pullAndMerge } from './lib/sync'
-import { isUpstashEnabled } from './lib/upstash'
 import Navbar       from './components/Navbar'
 import OfflineBanner from './components/OfflineBanner'
 import ListView      from './components/ListView'
@@ -13,46 +11,15 @@ import { useOnlineStatus } from './hooks/useOnlineStatus'
 const BASE = import.meta.env.BASE_URL
 
 export default function App() {
-  const { current, setAllProblems, setSolved, setSaved, setNotes, setSyncStatus, settingsOpen } = useStore()
+  const { current, setAllProblems, settingsOpen } = useStore()
   const online = useOnlineStatus()
 
-  // Load problems
+  // Load problems only — progress stays local until you Push/Pull in Settings
   useEffect(() => {
     loadProblems(BASE)
       .then(p => setAllProblems(p))
       .catch(console.error)
   }, [setAllProblems])
-
-  // Sync on mount + when coming back online
-  useEffect(() => {
-    if (!online || !isUpstashEnabled()) return
-    setSyncStatus('syncing')
-    pullAndMerge()
-      .then(({ solved, saved, notes }) => {
-        setSolved(solved)
-        setSaved(saved)
-        setNotes(notes)
-        setSyncStatus('synced', null)
-        setTimeout(() => setSyncStatus('idle'), 2000)
-      })
-      .catch((err: Error) => setSyncStatus('error', err?.message || 'Sync failed'))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [online])
-
-  // Poll every 5s for cross-device updates
-  useEffect(() => {
-    if (!isUpstashEnabled()) return
-    const id = setInterval(() => {
-      if (!navigator.onLine) return
-      pullAndMerge().then(({ solved, saved, notes, changed }) => {
-        if (changed) { setSolved(solved); setSaved(saved); setNotes(notes) }
-      }).catch((err: Error) => {
-        setSyncStatus('error', err?.message || 'Sync failed')
-      })
-    }, 5_000)
-    return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   return (
     <div className="min-h-screen flex flex-col">

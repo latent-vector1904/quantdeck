@@ -34,9 +34,8 @@ jobs:
         run: npm ci
       - name: Build
         working-directory: ./quantdeck
-        env:
-          VITE_UPSTASH_REST_URL: ${{ secrets.VITE_UPSTASH_REST_URL }}
-          VITE_UPSTASH_REST_TOKEN: ${{ secrets.VITE_UPSTASH_REST_TOKEN }}
+        # Do not bake Upstash write tokens into the public site.
+        # Progress stays localStorage; optional private sync via Settings only.
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v4

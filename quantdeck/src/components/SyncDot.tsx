@@ -8,7 +8,7 @@ export default function SyncDot() {
   if (status === 'idle') return null
 
   if (status === 'syncing') return (
-    <div title="Syncing…" className="w-3.5 h-3.5">
+    <div title="Push/Pull in progress…" className="w-3.5 h-3.5">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5 text-text-faint animate-spin">
         <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity=".2"/>
         <path d="M21 12a9 9 0 00-9-9"/>
@@ -17,11 +17,11 @@ export default function SyncDot() {
   )
 
   if (status === 'synced') return (
-    <div title="Synced" className="flex items-center gap-1 text-[11px] text-accent-dim font-medium animate-fade">
+    <div title="Push/Pull done" className="flex items-center gap-1 text-[11px] text-accent-dim font-medium animate-fade">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
         <path d="M20 6L9 17l-5-5"/>
       </svg>
-      Synced
+      Done
     </div>
   )
 
