@@ -21,6 +21,7 @@ export default function SettingsModal() {
   const [tokenInput, setTokenInput] = useState(getUpstashToken())
   const [progressMsg, setProgressMsg] = useState<string | null>(null)
   const [remotePeek, setRemotePeek] = useState<{ solved: number; saved: number; notes: number } | null>(null)
+  const [pendingAction, setPendingAction] = useState<null | 'push' | 'pull'>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const progressRef = useRef<HTMLInputElement>(null)
   const overrideMeta = getOverrideMeta()
@@ -97,12 +98,8 @@ export default function SettingsModal() {
     }
   }
 
-  async function handlePull() {
-    if (!ensureCredentialsSaved()) {
-      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
-      return
-    }
-    if (!confirm('Pull from cloud?\n\nThis REPLACES solved / saved / notes in THIS browser with whatever is in Upstash.')) return
+  async function runPull() {
+    setPendingAction(null)
     setSyncStatus('syncing')
     try {
       const result = await pullAll()
@@ -119,23 +116,35 @@ export default function SettingsModal() {
     }
   }
 
-  async function handlePush() {
-    if (!ensureCredentialsSaved()) {
-      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
-      return
-    }
-    if (!confirm('Push to cloud?\n\nThis OVERWRITES Upstash with THIS browser’s solved / saved / notes.')) return
+  async function runPush() {
+    setPendingAction(null)
     setSyncStatus('syncing')
     try {
       const counts = await pushAll()
       setRemotePeek(counts)
       setSyncStatus('synced', null)
-      setProgressMsg(`Pushed & verified — ${counts.solved} solved, ${counts.saved} saved, ${counts.notes} notes (keys: quantdeck:*)`)
+      setProgressMsg(`Pushed & verified — ${counts.solved} solved, ${counts.saved} saved, ${counts.notes} notes → keys quantdeck:solved / saved / notes`)
       setTimeout(() => setSyncStatus('idle'), 2000)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Push failed'
       setSyncStatus('error', msg)
     }
+  }
+
+  function handlePull() {
+    if (!ensureCredentialsSaved()) {
+      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
+      return
+    }
+    setPendingAction('pull')
+  }
+
+  function handlePush() {
+    if (!ensureCredentialsSaved()) {
+      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
+      return
+    }
+    setPendingAction('push')
   }
 
   async function handleImportProgress(file: File) {
@@ -293,9 +302,33 @@ export default function SettingsModal() {
                 </div>
               )}
 
+              {pendingAction === 'push' && (
+                <div className="p-3 rounded-lg border border-amber/40 bg-amber/10 flex flex-col gap-2">
+                  <p className="text-[12px] text-text-dim leading-relaxed">
+                    Overwrite Upstash with this browser? ({solved.size} solved, {saved.size} saved, {Object.keys(notes).length} notes)
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setPendingAction(null)} className="flex-1 py-2 border border-border rounded-lg text-xs text-text-dim">Cancel</button>
+                    <button onClick={runPush} className="flex-1 py-2 bg-accent text-[hsl(220,13%,8%)] font-bold text-xs rounded-lg">Yes, push</button>
+                  </div>
+                </div>
+              )}
+
+              {pendingAction === 'pull' && (
+                <div className="p-3 rounded-lg border border-amber/40 bg-amber/10 flex flex-col gap-2">
+                  <p className="text-[12px] text-text-dim leading-relaxed">
+                    Replace this browser’s progress with Upstash data?
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setPendingAction(null)} className="flex-1 py-2 border border-border rounded-lg text-xs text-text-dim">Cancel</button>
+                    <button onClick={runPull} className="flex-1 py-2 bg-accent text-[hsl(220,13%,8%)] font-bold text-xs rounded-lg">Yes, pull</button>
+                  </div>
+                </div>
+              )}
+
               <p className="text-[11px] text-text-faint leading-relaxed">
-                Copy <strong className="text-text-dim font-medium">REST URL</strong> + write <strong className="text-text-dim font-medium">Token</strong> from Upstash console (not the readonly token).
-                After Push, Data Browser should show <span className="font-mono text-text-dim">quantdeck:solved</span> etc — not plain <span className="font-mono">solved</span>.
+                In Upstash Data Browser search for <span className="font-mono text-text-dim">quantdeck:solved</span> —
+                plain <span className="font-mono">solved</span> will look empty. Use the write Token (not readonly).
               </p>
             </div>
 

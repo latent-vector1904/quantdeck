@@ -111,32 +111,32 @@ export async function pushAll(): Promise<{
     notes: { notes, updatedAt },
   }
 
-  await Promise.all([
-    upstashSet('solved', payload.solved),
-    upstashSet('saved', payload.saved),
-    upstashSet('notes', payload.notes),
-  ])
+  // Sequential writes — clearer errors than Promise.all
+  await upstashSet('solved', payload.solved)
+  await upstashSet('saved', payload.saved)
+  await upstashSet('notes', payload.notes)
 
-  // Verify write landed (catches readonly token / wrong DB)
-  const [checkSolved, checkSaved] = await Promise.all([
+  const [checkSolved, checkSaved, checkNotes] = await Promise.all([
     upstashGet('solved'),
     upstashGet('saved'),
+    upstashGet('notes'),
   ])
-  const gotSolved = Array.isArray((checkSolved as { ids?: unknown })?.ids)
-    ? (checkSolved as { ids: unknown[] }).ids.length
-    : -1
-  if (gotSolved !== payload.solved.ids.length) {
+
+  const gotSolved = parseVersionedSet(checkSolved).ids.length
+  const gotSaved = parseVersionedSet(checkSaved).ids.length
+  const gotNotes = Object.keys(parseVersionedNotes(checkNotes).notes).length
+
+  if (gotSolved !== payload.solved.ids.length || gotSaved !== payload.saved.ids.length) {
     throw new Error(
-      `Push wrote but readback mismatch (expected ${payload.solved.ids.length} solved, got ${gotSolved}). ` +
-      'In Upstash console look for keys quantdeck:solved / quantdeck:saved / quantdeck:notes',
+      `Push readback mismatch (wrote ${payload.solved.ids.length}/${payload.saved.ids.length}, ` +
+      `read ${gotSolved}/${gotSaved}). Open Upstash → Data Browser → key "quantdeck:solved"`,
     )
   }
-  void checkSaved
 
   return {
-    solved: payload.solved.ids.length,
-    saved: payload.saved.ids.length,
-    notes: Object.keys(payload.notes.notes).length,
+    solved: gotSolved,
+    saved: gotSaved,
+    notes: gotNotes,
   }
 }
 
