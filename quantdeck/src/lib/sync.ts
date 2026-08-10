@@ -91,8 +91,12 @@ export async function pushSaved(saved: Set<string>) { saveLocalSaved(saved) }
 export async function pushNotes(notes: Record<string, string>) { saveLocalNotes(notes) }
 
 /** Manual PUSH — overwrite cloud with this browser's progress. */
-export async function pushAll(): Promise<void> {
-  if (!isUpstashEnabled()) throw new Error('Cloud sync is not configured')
+export async function pushAll(): Promise<{
+  solved: number
+  saved: number
+  notes: number
+}> {
+  if (!isUpstashEnabled()) throw new Error('Cloud sync is not configured — save Upstash URL + Token first')
   const updatedAt = Date.now()
   const solved = lsGetSet(LS.solved)
   const saved = lsGetSet(LS.saved)
@@ -100,11 +104,40 @@ export async function pushAll(): Promise<void> {
   lsSetTs(TS.solved, updatedAt)
   lsSetTs(TS.saved, updatedAt)
   lsSetTs(TS.notes, updatedAt)
+
+  const payload = {
+    solved: { ids: [...solved], updatedAt },
+    saved: { ids: [...saved], updatedAt },
+    notes: { notes, updatedAt },
+  }
+
   await Promise.all([
-    upstashSet('solved', { ids: [...solved], updatedAt }),
-    upstashSet('saved', { ids: [...saved], updatedAt }),
-    upstashSet('notes', { notes, updatedAt }),
+    upstashSet('solved', payload.solved),
+    upstashSet('saved', payload.saved),
+    upstashSet('notes', payload.notes),
   ])
+
+  // Verify write landed (catches readonly token / wrong DB)
+  const [checkSolved, checkSaved] = await Promise.all([
+    upstashGet('solved'),
+    upstashGet('saved'),
+  ])
+  const gotSolved = Array.isArray((checkSolved as { ids?: unknown })?.ids)
+    ? (checkSolved as { ids: unknown[] }).ids.length
+    : -1
+  if (gotSolved !== payload.solved.ids.length) {
+    throw new Error(
+      `Push wrote but readback mismatch (expected ${payload.solved.ids.length} solved, got ${gotSolved}). ` +
+      'In Upstash console look for keys quantdeck:solved / quantdeck:saved / quantdeck:notes',
+    )
+  }
+  void checkSaved
+
+  return {
+    solved: payload.solved.ids.length,
+    saved: payload.saved.ids.length,
+    notes: Object.keys(payload.notes.notes).length,
+  }
 }
 
 /** Manual PULL — overwrite this browser with cloud progress. */

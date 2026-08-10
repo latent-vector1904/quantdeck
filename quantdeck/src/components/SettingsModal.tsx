@@ -5,6 +5,7 @@ import {
   getUpstashUrl,
   getUpstashToken,
   setUpstashCredentials,
+  upstashTestConnection,
 } from '../lib/upstash'
 import { saveOverride, clearOverride, getOverrideMeta, loadProblems } from '../lib/problems'
 import { pullAll, pushAll, peekRemote, downloadProgressBackup, importProgress } from '../lib/sync'
@@ -62,10 +63,15 @@ export default function SettingsModal() {
     setUploadPreview(null)
   }
 
+  function ensureCredentialsSaved(): boolean {
+    setUpstashCredentials(urlInput, tokenInput)
+    return Boolean(urlInput.trim() && tokenInput.trim())
+  }
+
   function saveCredentialsOnly() {
     setUpstashCredentials(urlInput, tokenInput)
     setSyncStatus('idle', null)
-    setProgressMsg(urlInput.trim() && tokenInput.trim() ? 'Cloud credentials saved — use Push / Pull below' : 'Cloud sync turned off')
+    setProgressMsg(urlInput.trim() && tokenInput.trim() ? 'Cloud credentials saved — use Test / Push / Pull below' : 'Cloud sync turned off')
     if (urlInput.trim() && tokenInput.trim()) {
       peekRemote().then(setRemotePeek).catch(() => setRemotePeek(null))
     } else {
@@ -73,7 +79,29 @@ export default function SettingsModal() {
     }
   }
 
+  async function handleTest() {
+    if (!ensureCredentialsSaved()) {
+      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
+      return
+    }
+    setSyncStatus('syncing')
+    try {
+      const msg = await upstashTestConnection()
+      setSyncStatus('synced', null)
+      setProgressMsg(msg)
+      peekRemote().then(setRemotePeek).catch(() => setRemotePeek(null))
+      setTimeout(() => setSyncStatus('idle'), 2000)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Connection test failed'
+      setSyncStatus('error', msg)
+    }
+  }
+
   async function handlePull() {
+    if (!ensureCredentialsSaved()) {
+      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
+      return
+    }
     if (!confirm('Pull from cloud?\n\nThis REPLACES solved / saved / notes in THIS browser with whatever is in Upstash.')) return
     setSyncStatus('syncing')
     try {
@@ -92,13 +120,17 @@ export default function SettingsModal() {
   }
 
   async function handlePush() {
+    if (!ensureCredentialsSaved()) {
+      setSyncStatus('error', 'Paste Upstash REST URL + Token first')
+      return
+    }
     if (!confirm('Push to cloud?\n\nThis OVERWRITES Upstash with THIS browser’s solved / saved / notes.')) return
     setSyncStatus('syncing')
     try {
-      await pushAll()
-      setRemotePeek({ solved: solved.size, saved: saved.size, notes: Object.keys(notes).length })
+      const counts = await pushAll()
+      setRemotePeek(counts)
       setSyncStatus('synced', null)
-      setProgressMsg(`Pushed — ${solved.size} solved, ${saved.size} saved, ${Object.keys(notes).length} notes`)
+      setProgressMsg(`Pushed & verified — ${counts.solved} solved, ${counts.saved} saved, ${counts.notes} notes (keys: quantdeck:*)`)
       setTimeout(() => setSyncStatus('idle'), 2000)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Push failed'
@@ -187,6 +219,7 @@ export default function SettingsModal() {
                   <Row label="Cloud notes" value={<span className="text-text-dim">{remotePeek.notes}</span>} />
                 </>
               )}
+              <Row label="Redis keys" value={<span className="font-mono text-[10px] text-text-faint">quantdeck:solved / saved / notes</span>} />
             </div>
 
             <div className="mt-3 flex flex-col gap-3">
@@ -201,12 +234,12 @@ export default function SettingsModal() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] text-text-faint font-medium uppercase tracking-wider">Upstash REST Token</label>
+                <label className="text-[11px] text-text-faint font-medium uppercase tracking-wider">Upstash REST Token (write, not readonly)</label>
                 <input
                   type="password"
                   value={tokenInput}
                   onChange={e => setTokenInput(e.target.value)}
-                  placeholder="Your private token"
+                  placeholder="Token from console → REST API"
                   className="w-full bg-bg-muted border border-border rounded-lg px-3 py-1.5 text-xs text-text focus:outline-none focus:border-accent font-mono"
                 />
               </div>
@@ -216,6 +249,13 @@ export default function SettingsModal() {
                   className="flex-1 py-2.5 border border-border rounded-lg text-xs font-medium text-text-dim hover:bg-bg-muted hover:text-text transition-all"
                 >
                   Save credentials
+                </button>
+                <button
+                  onClick={handleTest}
+                  disabled={syncStatus === 'syncing' || !(urlInput.trim() && tokenInput.trim())}
+                  className="flex-1 py-2.5 border border-border rounded-lg text-xs font-medium text-text-dim hover:bg-bg-muted hover:text-text disabled:opacity-50 transition-all"
+                >
+                  Test connection
                 </button>
                 {syncOn && (
                   <button
@@ -234,7 +274,7 @@ export default function SettingsModal() {
                 )}
               </div>
 
-              {syncOn && (
+              {(syncOn || (urlInput.trim() && tokenInput.trim())) && (
                 <div className="flex gap-2">
                   <button
                     onClick={handlePull}
@@ -254,15 +294,14 @@ export default function SettingsModal() {
               )}
 
               <p className="text-[11px] text-text-faint leading-relaxed">
-                Nothing auto-syncs. <strong className="text-text-dim font-medium">Push</strong> uploads this browser → cloud.
-                <strong className="text-text-dim font-medium"> Pull</strong> downloads cloud → this browser (overwrites local).
-                Use a private token; don’t publish it on a public site.
+                Copy <strong className="text-text-dim font-medium">REST URL</strong> + write <strong className="text-text-dim font-medium">Token</strong> from Upstash console (not the readonly token).
+                After Push, Data Browser should show <span className="font-mono text-text-dim">quantdeck:solved</span> etc — not plain <span className="font-mono">solved</span>.
               </p>
             </div>
 
             {syncStatus === 'error' && syncError && (
-              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400 leading-relaxed font-mono">
-                ⚠️ <strong>Sync Error:</strong> {syncError}
+              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400 leading-relaxed font-mono break-words">
+                <strong>Sync Error:</strong> {syncError}
               </div>
             )}
           </section>
